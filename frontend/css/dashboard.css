@@ -743,5 +743,31 @@ td, .members-table td {
         width: 95%;
 
     }
+    @media (max-width:768px){
 
+    .dashboard,
+    .dashboard-container{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        width:100% !important;
+        height:auto !important;
+        min-height:auto !important;
+    }
+
+    .main-content{
+        width:100%;
+        padding:15px;
+        overflow:visible !important;
+        height:auto !important;
+    }
+
+}
+
+}
+html,
+body{
+    overflow-y:auto !important;
+    height:auto !important;
 }
