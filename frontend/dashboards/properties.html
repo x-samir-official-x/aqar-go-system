@@ -16,7 +16,7 @@
     // ==========================================
     const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
     if (!currentUser || currentUser.role !== 'owner') {
-        window.location.replace("../login.html");
+        window.location.replace("../../index.html");
     }
 </script>
 

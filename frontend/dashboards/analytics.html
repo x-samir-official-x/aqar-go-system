@@ -178,7 +178,7 @@ loadAnalyticsData();
 document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.removeItem("user");
     sessionStorage.removeItem("user");
-    window.location.replace("../login.html");
+    window.location.replace("../../index.html");
 });
 
 if (localStorage.getItem('theme') === 'dark') {

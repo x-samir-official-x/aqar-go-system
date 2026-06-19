@@ -13,7 +13,7 @@
 <script>
     // جلب بيانات اليوزر من الجلسة
     const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
-    if(!currentUser){ window.location.replace("../login.html"); }
+    if(!currentUser){ window.location.replace("../../index.html"); }
     if(currentUser.role === "owner"){ window.location.replace("owner-dashboard.html"); }
 </script>
 

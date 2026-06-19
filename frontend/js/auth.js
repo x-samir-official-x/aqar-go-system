@@ -43,7 +43,7 @@ const response = await fetch(`${API_BASE_URL}/auth/login`, {
 
             // توجيه المستخدم للوحة التحكم الخاصة به بناءً على الـ Role
             if (data.user.role === 'owner') {
-                window.location.href = "dashboards/owner-dashboard.html";
+                window.location.href = "frontend/dashboards/owner-dashboard.html";
             } else {
                 window.location.href = "frontend/dashboards/member-dashboard.html";
             }
