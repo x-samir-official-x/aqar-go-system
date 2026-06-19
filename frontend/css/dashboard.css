@@ -672,29 +672,47 @@ td, .members-table td {
 
 }
 
-@media (max-width: 768px){
+@media (max-width: 480px){
 
-    .dashboard,
-    .dashboard-container{
-
-        flex-direction: column;
-
+    .card,
+    .stat-card,
+    .member-card{
+        padding:18px;
     }
 
+    .card h1{
+        font-size:28px;
+    }
+
+    .modal-content{
+        width:95%;
+    }
+
+}
+
+@media (max-width:768px){
+
     .sidebar{
+        position:fixed;
+        left:-280px;
+        top:0;
+        width:280px;
+        height:100vh;
+        z-index:9999;
+        transition:.3s;
+    }
 
-        width: 100%;
-        height: auto;
-        position: relative;
-
+    .sidebar.collapsed{
+        left:0;
+        width:280px;
     }
 
     .main-content{
-
-        padding: 15px;
-        height: auto;
-
+        width:100%;
+        padding:15px;
     }
+
+}
 
     .topbar,
     .page-header{
@@ -720,52 +738,27 @@ td, .members-table td {
 
     }
 
-}
-
-@media (max-width: 480px){
+    @media (max-width:768px){
 
     .card,
     .stat-card,
-    .member-card{
+    .member-card,
+    .property-stat-card{
 
-        padding: 18px;
-
-    }
-
-    .card h1{
-
-        font-size: 28px;
-
-    }
-
-    .modal-content{
-
-        width: 95%;
-
-    }
-    @media (max-width:768px){
-
-    .dashboard,
-    .dashboard-container{
-        flex-direction:column;
-    }
-
-    .sidebar{
-        width:100% !important;
-        height:auto !important;
-        min-height:auto !important;
-    }
-
-    .main-content{
-        width:100%;
         padding:15px;
-        overflow:visible !important;
-        height:auto !important;
+    }
+
+    .card h1,
+    .stat-card h2,
+    .member-card h2,
+    .property-stat-card h2{
+
+        font-size:24px;
     }
 
 }
 
-}
+
 html,
 body{
     overflow-y:auto !important;
