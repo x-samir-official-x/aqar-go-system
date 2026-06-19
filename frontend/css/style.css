@@ -529,3 +529,71 @@ body.dark-theme #toggleBtn {
     font-size: 20px;
     color: white;
 }
+
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
+
+@media (max-width: 992px){
+
+    .main-container{
+        flex-direction: column;
+        height: auto;
+    }
+
+    .left-panel,
+    .right-panel{
+        width: 100%;
+    }
+
+    .content{
+        padding: 40px;
+    }
+
+    .content h1{
+        font-size: 40px;
+    }
+
+    .login-card{
+        width: 90%;
+        max-width: 450px;
+        margin: 30px auto;
+    }
+
+}
+
+@media (max-width: 768px){
+
+    .left-panel{
+        display: none;
+    }
+
+    .right-panel{
+        width: 100%;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .login-card{
+        width: 100%;
+        padding: 30px;
+        border-radius: 20px;
+    }
+
+    .logo-small{
+        width: 150px;
+    }
+
+}
+
+@media (max-width: 480px){
+
+    .login-card{
+        padding: 20px;
+    }
+
+    .login-card h2{
+        font-size: 22px;
+    }
+
+}

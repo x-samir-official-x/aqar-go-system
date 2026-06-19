@@ -654,3 +654,94 @@ td, .members-table td {
     visibility: visible;
     transform: translateY(0);
 }
+
+/* =========================================
+   RESPONSIVE DASHBOARD
+========================================= */
+
+@media (max-width: 1200px){
+
+    .stats-grid,
+    .member-stats,
+    .property-stats,
+    .cards{
+
+        grid-template-columns: repeat(2,1fr);
+
+    }
+
+}
+
+@media (max-width: 768px){
+
+    .dashboard,
+    .dashboard-container{
+
+        flex-direction: column;
+
+    }
+
+    .sidebar{
+
+        width: 100%;
+        height: auto;
+        position: relative;
+
+    }
+
+    .main-content{
+
+        padding: 15px;
+        height: auto;
+
+    }
+
+    .topbar,
+    .page-header{
+
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+
+    }
+
+    .stats-grid,
+    .member-stats,
+    .property-stats,
+    .cards{
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .table-container{
+
+        overflow-x: auto;
+
+    }
+
+}
+
+@media (max-width: 480px){
+
+    .card,
+    .stat-card,
+    .member-card{
+
+        padding: 18px;
+
+    }
+
+    .card h1{
+
+        font-size: 28px;
+
+    }
+
+    .modal-content{
+
+        width: 95%;
+
+    }
+
+}
