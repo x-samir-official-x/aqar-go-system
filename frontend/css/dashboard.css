@@ -710,32 +710,24 @@ td, .members-table td {
         height:auto !important;
     }
 
-}
-
     .topbar,
     .page-header{
-
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
-
     }
 
     .stats-grid,
     .member-stats,
     .property-stats,
     .cards{
-
         grid-template-columns: 1fr;
-
     }
 
     .table-container{
-
-        overflow-x: auto;
-
+        overflow-x:auto;
     }
-
+}
 
 
 html,
