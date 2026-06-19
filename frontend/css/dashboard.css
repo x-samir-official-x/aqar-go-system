@@ -738,25 +738,7 @@ td, .members-table td {
 
     }
 
-    @media (max-width:768px){
-
-    .card,
-    .stat-card,
-    .member-card,
-    .property-stat-card{
-
-        padding:15px;
-    }
-
-    .card h1,
-    .stat-card h2,
-    .member-card h2,
-    .property-stat-card h2{
-
-        font-size:24px;
-    }
-
-}
+    
 
 
 html,
