@@ -348,7 +348,7 @@ function viewService(id) {
 document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.removeItem("user");
     sessionStorage.removeItem("user");
-    window.location.href = "../login.html";
+    window.location.replace("/aqar-go-system/index.html");
 });
 
 // تشغيل جلب الداتا
