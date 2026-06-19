@@ -45,7 +45,7 @@ const response = await fetch(`${API_BASE_URL}/auth/login`, {
             if (data.user.role === 'owner') {
                 window.location.href = "dashboards/owner-dashboard.html";
             } else {
-                window.location.href = "dashboards/member-dashboard.html";
+                window.location.href = "frontend/dashboards/member-dashboard.html";
             }
 
         } else {
