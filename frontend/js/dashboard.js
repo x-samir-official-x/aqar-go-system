@@ -16,7 +16,7 @@ if (toggleBtn) {
 const user = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
 
 if (!user) {
-    window.location.replace("../login.html");
+   window.location.replace("/aqar-go-system/index.html");
 }
 
 if (user) {
@@ -32,7 +32,7 @@ if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         localStorage.removeItem("user");
         sessionStorage.removeItem("user");
-        window.location.replace("../login.html");
+        window.location.replace("/aqar-go-system/index.html");
     });
 }
 
