@@ -764,7 +764,85 @@ td, .members-table td {
     }
 
 }
+/* =========================================
+   MOBILE RESPONSIVE
+========================================= */
 
+@media (max-width: 768px) {
+
+    .dashboard-container,
+    .dashboard {
+        flex-direction: column;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        width: 280px;
+        height: 100%;
+        z-index: 9999;
+        transition: .3s;
+    }
+
+    .sidebar.collapsed {
+        left: 0;
+        width: 280px;
+    }
+
+    /* Main Content */
+    .main-content {
+        width: 100%;
+        padding: 15px;
+        margin-left: 0;
+    }
+
+    /* Cards */
+    .cards,
+    .stats-grid,
+    .member-stats,
+    .property-stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .card,
+    .stat-card,
+    .member-card,
+    .property-stat-card {
+        padding: 18px;
+    }
+
+    .card h1,
+    .stat-card h2,
+    .member-card h2 {
+        font-size: 24px;
+    }
+
+    /* Topbar */
+    .topbar,
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    /* Tables */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 700px;
+    }
+
+    /* Collection cards */
+    .collection-actions {
+        grid-template-columns: 1fr;
+    }
+
+}
 }
 html,
 body{
