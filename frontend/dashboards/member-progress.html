@@ -23,7 +23,7 @@
 
 <script>
     const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
-    if(!currentUser){ window.location.replace("../../index.html"); }
+    if(!currentUser){ window.location.replace("/aqar-go-system/index.html"); }
     if(currentUser.role === "owner"){ window.location.replace("owner-dashboard.html"); }
 </script>
 

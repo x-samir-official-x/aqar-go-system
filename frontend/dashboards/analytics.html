@@ -67,7 +67,7 @@
 // ==========================================
 const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
 if (!currentUser || currentUser.role !== 'owner') {
-    window.location.replace("../../index.html");
+    window.location.replace("/aqar-go-system/index.html");
 }
 
 // ==========================================
