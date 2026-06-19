@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Aqar-Go</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+<script>
+    // جلب بيانات اليوزر من الجلسة
+    const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+    if(!currentUser){ window.location.replace("../login.html"); }
+    if(currentUser.role === "owner"){ window.location.replace("owner-dashboard.html"); }
+</script>
+
+<div class="dashboard-container">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <h2>Aqar-Go</h2>
+        </div>
+        <ul>
+            <li onclick="window.location.href='member-dashboard.html'">
+                <i class="fas fa-house"></i><span>Dashboard</span>
+            </li>
+            <li onclick="window.location.href='member-data.html'">
+                <i class="fas fa-database"></i><span>Data Collection</span>
+            </li>
+            <li onclick="window.location.href='member-progress.html'">
+                <i class="fas fa-chart-line"></i><span>My Progress</span>
+            </li>
+            <li class="active">
+                <i class="fas fa-user"></i><span>Profile</span>
+            </li>
+        </ul>
+        <button class="logout-btn" id="logoutBtn">
+            <i class="fas fa-right-from-bracket"></i> Logout
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>My Profile</h1>
+                <p>Manage your account information and security</p>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div class="table-container" style="margin-top: 0;">
+                <h2>Personal Information</h2>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:bold; color:#072c67;">Full Name</label>
+                    <input type="text" id="profileName" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:bold; color:#072c67;">Username (Email)</label>
+                    <input type="email" id="profileEmail" disabled style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; background:#f1f5f9;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:bold; color:#072c67;">Phone Number</label>
+                    <input type="text" id="profilePhone" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px;">
+                </div>
+                <button class="add-member-btn" style="width:100%;" onclick="saveProfile()">Save Changes</button>
+            </div>
+
+            <div class="table-container" style="margin-top: 0;">
+                <h2>Security Settings</h2>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:bold; color:#072c67;">New Password</label>
+                    <input type="password" id="newPassword" placeholder="••••••••" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px;">
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Enter a new password to update your login credentials.</p>
+                <button class="add-member-btn" style="width:100%; background:#072c67;" onclick="changePassword()">Change Password</button>
+            </div>
+        </div>
+    </main>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/dashboard.js"></script>
+
+<script>
+    function showToast(message, isError = false) {
+        const toast = document.getElementById("toast");
+        toast.textContent = (isError ? "❌ " : "✅ ") + message;
+        toast.style.background = isError ? "#ef4444" : "#10b981";
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("profileName").value = currentUser.name || "";
+        document.getElementById("profileEmail").value = currentUser.email || "";
+        document.getElementById("profilePhone").value = currentUser.phone || "";
+    });
+
+    // 1. تحديث البيانات الشخصية (الاسم ورقم التليفون) في السيرفر
+    async function saveProfile() {
+        const newName = document.getElementById("profileName").value;
+        const newPhone = document.getElementById("profilePhone").value;
+
+        if (!newName.trim()) return showToast("Name cannot be empty!", true);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/update/${currentUser._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName, phone: newPhone })
+            });
+
+            if (response.ok) {
+                // تحديث البيانات في الجلسة المحلية عشان تفضل ظاهرة صح
+                currentUser.name = newName;
+                currentUser.phone = newPhone;
+                updateLocalSession();
+                
+                showToast("Profile Updated Successfully!");
+            } else {
+                showToast("Failed to update profile", true);
+            }
+        } catch (error) {
+            showToast("Server connection error!", true);
+        }
+    }
+
+    // 2. تحديث الباسوورد في السيرفر
+    async function changePassword() {
+        const newPass = document.getElementById("newPassword").value;
+
+        if (newPass.length < 6) return showToast("New password must be at least 6 characters!", true);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/update/${currentUser._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: newPass })
+            });
+
+            if (response.ok) {
+                document.getElementById("newPassword").value = "";
+                showToast("Password Changed Successfully!");
+            } else {
+                showToast("Failed to change password", true);
+            }
+        } catch (error) {
+            showToast("Server connection error!", true);
+        }
+    }
+
+    // 3. تحديث الجلسة المحلية (بدون ما نعدل في مصفوفة قديمة مالهاش لازمة)
+    function updateLocalSession() {
+        if (localStorage.getItem("user")) {
+            localStorage.setItem("user", JSON.stringify(currentUser));
+        } else {
+            sessionStorage.setItem("user", JSON.stringify(currentUser));
+        }
+        
+        // تحديث الاسم في القائمة الجانبية لو موجود
+        const userNameDisplay = document.getElementById("userName");
+        if(userNameDisplay) userNameDisplay.textContent = currentUser.name;
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if(logoutBtn){
+        logoutBtn.addEventListener("click", () => {
+            localStorage.removeItem("user");
+            sessionStorage.removeItem("user");
+            window.location.href = "../login.html";
+        });
+    }
+</script>
+</body>
+</html>

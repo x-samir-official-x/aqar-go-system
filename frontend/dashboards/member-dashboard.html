@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Dashboard</title>
+
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+<script>
+    const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+
+    if(!currentUser){
+        window.location.replace("../login.html");
+    }
+
+    if(currentUser.role === "owner"){
+        window.location.replace("owner-dashboard.html");
+    }
+</script>
+
+<div class="dashboard-container">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <h2>Aqar-Go</h2>
+        </div>
+        <ul>
+            <li class="active">
+                <i class="fas fa-house"></i>
+                <span>Dashboard</span>
+            </li>
+            <li onclick="window.location.href='member-data.html'">
+                <i class="fas fa-database"></i>
+                <span>Data Collection</span>
+            </li>
+            <li onclick="window.location.href='member-progress.html'">
+                <i class="fas fa-chart-line"></i>
+                <span>My Progress</span>
+            </li>
+            <li onclick="window.location.href='member-profile.html'">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </li>
+        </ul>
+        <button class="logout-btn" id="logoutBtn">
+            <i class="fas fa-right-from-bracket"></i>
+            Logout
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <div class="topbar">
+            <button id="toggleBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2>
+                Welcome Back,
+                <span id="userName">
+                    Loading...
+                </span>
+            </h2>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <h3>Today's Records</h3>
+                <h1 id="todayRecords">0</h1>
+            </div>
+            <div class="card">
+                <h3>Total Records</h3>
+                <h1 id="totalRecords">0</h1>
+            </div>
+            <div class="card">
+                <h3>My Properties</h3>
+                <h1 id="totalPropertiesMember">0</h1>
+            </div>
+            <div class="card">
+                <h3>My Services</h3>
+                <h1 id="totalServicesMember">0</h1>
+            </div>
+        </div>
+
+        <div class="activity-box">
+            <h2>Recent Activity</h2>
+            <ul id="memberActivityList">
+                </ul>
+        </div>
+    </main>
+
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/dashboard.js"></script>
+
+</body>
+</html>

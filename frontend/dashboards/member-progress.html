@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Progress - Aqar-Go</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .progress-bar-container {
+            width: 100%; height: 12px; background: #e5e7eb;
+            border-radius: 10px; overflow: hidden; margin-top: 15px;
+        }
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(135deg, #16a085, #1abc9c);
+            width: 0%; transition: width 1s ease-in-out; border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+    if(!currentUser){ window.location.replace("../login.html"); }
+    if(currentUser.role === "owner"){ window.location.replace("owner-dashboard.html"); }
+</script>
+
+<div class="dashboard-container">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <h2>Aqar-Go</h2>
+        </div>
+        <ul>
+            <li onclick="window.location.href='member-dashboard.html'">
+                <i class="fas fa-house"></i><span>Dashboard</span>
+            </li>
+            <li onclick="window.location.href='member-data.html'">
+                <i class="fas fa-database"></i><span>Data Collection</span>
+            </li>
+            <li class="active">
+                <i class="fas fa-chart-line"></i><span>My Progress</span>
+            </li>
+            <li onclick="window.location.href='member-profile.html'">
+                <i class="fas fa-user"></i><span>Profile</span>
+            </li>
+        </ul>
+        <button class="logout-btn" id="logoutBtn">
+            <i class="fas fa-right-from-bracket"></i> Logout
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>My Progress</h1>
+                <p>Track your actual performance and success rate</p>
+            </div>
+        </div>
+
+        <div class="table-container" style="margin-top: 0; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Overall Success Rate</h2>
+                <span id="successRateText" style="font-weight: bold; color: #16a085; font-size: 20px;">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="successProgressBar"></div>
+            </div>
+            <p style="color: #64748b; margin-top: 10px; font-size: 14px;">Based on your approved vs submitted records.</p>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <h3>Total Submitted</h3>
+                <h1 id="totalSubmitted">0</h1>
+            </div>
+            <div class="card">
+                <h3>Approved</h3>
+                <h1 id="totalApproved" style="color: #16a085;">0</h1>
+            </div>
+            <div class="card">
+                <h3>Pending</h3>
+                <h1 id="totalPending" style="color: #f59e0b;">0</h1>
+            </div>
+            <div class="card">
+                <h3>Rejected</h3>
+                <h1 id="totalRejected" style="color: #ef4444;">0</h1>
+            </div>
+        </div>
+    </main>
+
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/dashboard.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            // جلب البيانات من السيرفر بدل الـ localStorage
+            const [propRes, servRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/properties`),
+                fetch(`${API_BASE_URL}/services`)
+            ]);
+
+            const properties = await propRes.json();
+            const services = await servRes.json();
+            
+            // جلب الداتا الخاصة باليوزر ده بس
+            const myProperties = properties.filter(p => p.addedBy === currentUser.name);
+            const myServices = services.filter(s => s.addedBy === currentUser.name);
+            const allMyRecords = [...myProperties, ...myServices];
+
+            let submitted = allMyRecords.length;
+            let approved = allMyRecords.filter(r => r.status === "Approved").length;
+            let pending = allMyRecords.filter(r => r.status === "Pending").length;
+            let rejected = allMyRecords.filter(r => r.status === "Rejected").length;
+
+            // تحديث الأرقام في الكروت
+            document.getElementById("totalSubmitted").textContent = submitted;
+            document.getElementById("totalApproved").textContent = approved;
+            document.getElementById("totalPending").textContent = pending;
+            document.getElementById("totalRejected").textContent = rejected;
+
+            // حساب نسبة النجاح
+            let successRate = 0;
+            if (submitted > 0) {
+                successRate = Math.round((approved / submitted) * 100);
+            }
+
+            // حركة الـ Progress Bar الأنيقة
+            setTimeout(() => {
+                document.getElementById("successProgressBar").style.width = successRate + "%";
+                document.getElementById("successRateText").textContent = successRate + "%";
+            }, 500);
+
+        } catch (error) {
+            console.error("Error fetching progress data:", error);
+            // ممكن نضيف رسالة خطأ بسيطة هنا لو السيرفر واقع
+            document.getElementById("successRateText").textContent = "Error loading data";
+        }
+    });
+
+    const logoutButton = document.getElementById("logoutBtn");
+    if(logoutButton){
+        logoutButton.addEventListener("click", () => {
+            localStorage.removeItem("user");
+            sessionStorage.removeItem("user");
+            window.location.href = "../login.html";
+        });
+    }
+</script>
+</body>
+</html>

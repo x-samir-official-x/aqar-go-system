@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aqar-Go Dashboard</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+<div class="dashboard">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <img src="../assets/logo.png">
+            <span>Aqar-Go</span>
+        </div>
+        <ul>
+            <li class="active">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </li>
+            <li onclick="window.location.href='properties.html'">
+                <i class="fas fa-building"></i>
+                <span>Properties</span>
+            </li>
+            <li onclick="window.location.href='services.html'">
+                <i class="fas fa-tools"></i>
+                <span>Services</span>
+            </li>
+            <li onclick="window.location.href='team-members.html'">
+                <i class="fas fa-users"></i>
+                <span>Team Members</span>
+            </li>
+            <li onclick="window.location.href='pending-reviews.html'">
+                <i class="fas fa-clock"></i>
+                <span>Pending Reviews</span>
+            </li>
+            <li onclick="window.location.href='analytics.html'">
+                <i class="fas fa-chart-pie"></i>
+                <span>Analytics</span>
+            </li>
+            <li onclick="window.location.href='settings.html'">
+                <i class="fas fa-gear"></i>
+                <span>Settings</span>
+            </li>
+        </ul>
+        <button class="logout-btn" id="logoutBtn">
+            Logout
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <div class="topbar">
+            <button id="toggleBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="user-card">
+                <img src="../assets/logo.png">
+                <div>
+                    <h4 id="userName">Loading...</h4>
+                    <span class="role-badge">OWNER</span>
+                </div>
+            </div>
+        </div>
+
+        <section class="welcome-card">
+            <h1>Welcome Back 👋</h1>
+            <p>Manage your real estate ecosystem efficiently.</p>
+        </section>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <h2 id="totalProperties">0</h2>
+                <p>Properties</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="totalServices">0</h2>
+                <p>Services</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="totalMembers">0</h2>
+                <p>Team Members</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="pendingReviews">0</h2>
+                <p>Pending Reviews</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="approvedProperties">0</h2>
+                <p>Approved Properties</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="rejectedProperties">0</h2>
+                <p>Rejected Properties</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="approvedServices">0</h2>
+                <p>Approved Services</p>
+            </div>
+            <div class="stat-card">
+                <h2 id="rejectedServices">0</h2>
+                <p>Rejected Services</p>
+            </div>
+        </section>
+
+        <section class="activity-section">
+            <div class="activity-card">
+                <h2>Recent Activity</h2>
+                <ul id="activityList">
+                    <li>No recent activity</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="../js/config.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    // ==========================================
+    // 1. التحقق من تسجيل الدخول واسم المستخدم
+    // ==========================================
+    const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+    if (!currentUser || currentUser.role !== 'owner') {
+        window.location.replace("../login.html");
+        return;
+    }
+
+    const userNameEl = document.getElementById("userName");
+    if (userNameEl) {
+        userNameEl.textContent = currentUser.name;
+    }
+
+    // ==========================================
+    // 2. تشغيل القائمة الجانبية (Sidebar) وتسجيل الخروج
+    // ==========================================
+    const toggleBtn = document.getElementById("toggleBtn");
+    const sidebar = document.getElementById("sidebar");
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("active");
+        });
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            localStorage.removeItem("user");
+            sessionStorage.removeItem("user");
+            window.location.href = "../login.html";
+        });
+    }
+
+    // ==========================================
+    // 3. جلب البيانات الحقيقية من السيرفر وحساب الإحصائيات
+    // ==========================================
+    try {
+        // تم التعديل هنا لربطهم بالمتغير المركزي
+        const [propertiesRes, servicesRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/properties`),
+            fetch(`${API_BASE_URL}/services`)
+        ]);
+
+        const properties = propertiesRes.ok ? await propertiesRes.json() : [];
+        const services = servicesRes.ok ? await servicesRes.json() : [];
+
+        // حساب حالات العقارات
+        const pendingProps = properties.filter(p => p.status === 'Pending');
+        const approvedProps = properties.filter(p => p.status === 'Approved');
+        const rejectedProps = properties.filter(p => p.status === 'Rejected');
+
+        // حساب حالات الخدمات
+        const pendingServs = services.filter(s => s.status === 'Pending');
+        const approvedServs = services.filter(s => s.status === 'Approved');
+        const rejectedServs = services.filter(s => s.status === 'Rejected');
+
+        // ==========================================
+        // 4. عرض الأرقام في الداش بورد
+        // ==========================================
+        document.getElementById("totalProperties").textContent = properties.length;
+        document.getElementById("totalServices").textContent = services.length;
+        document.getElementById("pendingReviews").textContent = pendingProps.length + pendingServs.length;
+        
+        document.getElementById("approvedProperties").textContent = approvedProps.length;
+        document.getElementById("rejectedProperties").textContent = rejectedProps.length;
+        
+        document.getElementById("approvedServices").textContent = approvedServs.length;
+        document.getElementById("rejectedServices").textContent = rejectedServs.length;
+
+        // عدد أعضاء التيم
+        const usersRes = await fetch(`${API_BASE_URL}/users`);
+        const users = usersRes.ok ? await usersRes.json() : [];
+        document.getElementById("totalMembers").textContent = users.length;
+
+        // ==========================================
+        // 5. تغذية قسم النشاط الأخير (Recent Activity)
+        // ==========================================
+        const activityList = document.getElementById("activityList");
+        if (activityList) {
+            let activities = [
+                ...properties.map(p => ({ type: 'Property', name: p.name, addedBy: p.addedBy, date: new Date(p.createdAt || Date.now()) })),
+                ...services.map(s => ({ type: 'Service', name: s.name, addedBy: s.addedBy, date: new Date(s.createdAt || Date.now()) }))
+            ];
+
+            activities.sort((a, b) => b.date - a.date);
+            activities = activities.slice(0, 5);
+
+            activityList.innerHTML = "";
+            if (activities.length === 0) {
+                activityList.innerHTML = "<li>No recent activity yet.</li>";
+            } else {
+                activities.forEach(act => {
+                    activityList.innerHTML += `
+                        <li style="padding: 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                            <span><strong>${act.addedBy}</strong> added a new ${act.type}: <span style="color:#072c67; font-weight:bold;">${act.name}</span></span>
+                        </li>
+                    `;
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        document.getElementById("userName").textContent = "Connection Error!";
+    }
+});
+
+// كود تشغيل الوضع الليلي
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Collection - Aqar-Go</title>
+
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .custom-toast {
+            position: fixed; bottom: 30px; right: 30px; background: #072c67; color: white;
+            padding: 15px 25px; border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 10px; font-weight: 500;
+            transform: translateX(150%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 9999;
+        }
+        .custom-toast.show { transform: translateX(0); }
+        .custom-toast.error { background: #ef4444; }
+        
+        /* زرار الـ View في الجدول */
+        .view-btn {
+            background: #072c67; color: white; border: none; padding: 5px 10px;
+            border-radius: 5px; cursor: pointer; font-size: 12px; transition: 0.3s;
+        }
+        .view-btn:hover { background: #051f4e; }
+    </style>
+</head>
+
+<body>
+<script>
+    const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+    if(!currentUser){ window.location.replace("../login.html"); }
+</script>
+
+<div class="dashboard-container">
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>Aqar-Go</h2>
+        </div>
+        <ul>
+            <li onclick="window.location.href='member-dashboard.html'">
+                <i class="fas fa-house"></i><span>Dashboard</span>
+            </li>
+            <li class="active">
+                <i class="fas fa-database"></i><span>Data Collection</span>
+            </li>
+            <li onclick="window.location.href='member-progress.html'">
+                <i class="fas fa-chart-line"></i><span>My Progress</span>
+            </li>
+            <li onclick="window.location.href='member-profile.html'">
+                <i class="fas fa-user"></i><span>Profile</span>
+            </li>
+        </ul>
+        <button class="logout-btn" id="logoutBtn" style="margin-top: auto;">
+            <i class="fas fa-right-from-bracket"></i> Logout
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Data Collection</h1>
+                <p>Add new records</p>
+            </div>
+        </div>
+
+        <div class="collection-actions">
+            <div class="collection-card">
+                <i class="fas fa-building"></i>
+                <h3>Properties</h3>
+                <p>Add new property data</p>
+                <button class="add-member-btn" id="addPropertyBtn">Add Property</button>
+            </div>
+            <div class="collection-card">
+                <i class="fas fa-tools"></i>
+                <h3>Services</h3>
+                <p>Add new service data</p>
+                <button class="add-member-btn" id="addServiceBtn">Add Service</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2>My Properties</h2>
+            <table class="members-table">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Type</th><th>City</th><th>Status</th><th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="memberPropertiesTable"></tbody>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <h2>My Services</h2>
+            <table class="members-table">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Category</th><th>City</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="memberServicesTable"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<div id="propertyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Property</h2>
+            <span id="closeModal">&times;</span>
+        </div>
+        <form id="propertyForm">
+            <input type="text" id="propertyName" placeholder="Property Name" required>
+            <select id="propertyType">
+                <option>Apartment</option><option>Villa</option><option>Office</option>
+                <option>Land</option><option>Cafe</option><option>Shop</option>
+            </select>
+            <input type="text" id="propertyGovernorate" placeholder="Governorate" required>
+            <input type="text" id="propertyCity" placeholder="City" required>
+            <input type="text" id="propertyDistrict" placeholder="District">
+            <input type="text" id="propertyOwner" placeholder="Owner Name">
+            <input type="text" id="propertyPhone" placeholder="Phone Number">
+            <input type="number" id="propertyPrice" placeholder="Price">
+            <input type="number" id="propertyArea" placeholder="Area (m²)">
+            <input type="url" id="propertyMapLink" placeholder="Google Maps Link">
+            
+            <button type="button" id="openMapBtn" class="map-btn">📍 Show Preview</button>
+            <div id="mapPreviewContainer" style="display:none; margin-top:10px;">
+                <iframe id="mapPreview" width="100%" height="200" style="border:0; border-radius:8px;" loading="lazy"></iframe>
+            </div>
+            
+            <textarea id="propertyDescription" placeholder="Property Description"></textarea>
+            <button type="submit">Save Property</button>
+        </form>
+    </div>
+</div>
+
+<div id="viewPropertyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Property Details</h2>
+            <span id="closeViewModal">&times;</span>
+        </div>
+        <div class="property-details">
+            <p><strong>Name:</strong> <span id="viewName"></span></p>
+            <p><strong>Type:</strong> <span id="viewType"></span></p>
+            <p><strong>Governorate:</strong> <span id="viewGovernorate"></span></p>
+            <p><strong>City:</strong> <span id="viewCity"></span></p>
+            <p><strong>District:</strong> <span id="viewDistrict"></span></p>
+            <p><strong>Owner:</strong> <span id="viewOwner"></span></p>
+            <p><strong>Phone:</strong> <span id="viewPhone"></span></p>
+            <p><strong>Price:</strong> <span id="viewPrice"></span> EGP</p>
+            <p><strong>Area:</strong> <span id="viewArea"></span> m²</p>
+            <p><strong>Description:</strong> <span id="viewDescription"></span></p>
+            <br>
+            <a id="viewMapLink" target="_blank" class="map-link" style="display:none; background:#072c67; color:white; padding:10px; text-decoration:none; border-radius:5px;">📍 Open in Maps</a>
+        </div>
+    </div>
+</div>
+
+<div id="serviceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Service</h2>
+            <span id="closeServiceModal">&times;</span>
+        </div>
+        <form id="serviceForm">
+            <input type="text" id="serviceName" placeholder="Service Name" required>
+            <select id="serviceCategory">
+                <option>Maintenance</option><option>Cleaning</option><option>Security</option>
+                <option>Legal</option><option>Moving</option><option>Interior Design</option>
+            </select>
+            <input type="text" id="serviceGovernorate" placeholder="Governorate" required>
+            <input type="text" id="serviceCity" placeholder="City" required>
+            <input type="text" id="serviceProvider" placeholder="Provider Name">
+            <input type="text" id="servicePhone" placeholder="Phone Number">
+            <input type="number" id="servicePrice" placeholder="Price">
+            <textarea id="serviceDescription" placeholder="Service Description"></textarea>
+            <button type="submit">Save Service</button>
+        </form>
+    </div>
+</div>
+
+<div id="toastNotification" class="custom-toast">
+    <i class="fas fa-info-circle"></i> <span id="toastMessage"></span>
+</div>
+
+<script src="../js/config.js"></script>
+<script>
+    let myCachedProperties = []; // عشان نحفظ الداتا للعرض السريع
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById("toastNotification");
+        document.getElementById("toastMessage").textContent = message;
+        if(isError) toast.classList.add("error"); else toast.classList.remove("error");
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 4000);
+    }
+
+    // Modal Triggers
+    const propertyModal = document.getElementById("propertyModal");
+    const serviceModal = document.getElementById("serviceModal");
+    const viewModal = document.getElementById("viewPropertyModal");
+
+    document.getElementById("addPropertyBtn").onclick = () => propertyModal.style.display = "flex";
+    document.getElementById("closeModal").onclick = () => propertyModal.style.display = "none";
+    document.getElementById("addServiceBtn").onclick = () => serviceModal.style.display = "flex";
+    document.getElementById("closeServiceModal").onclick = () => serviceModal.style.display = "none";
+    document.getElementById("closeViewModal").onclick = () => viewModal.style.display = "none";
+
+    window.onclick = (e) => {
+        if (e.target === propertyModal) propertyModal.style.display = "none";
+        if (e.target === serviceModal) serviceModal.style.display = "none";
+        if (e.target === viewModal) viewModal.style.display = "none";
+    };
+
+    // Map Preview Logic
+    document.getElementById("openMapBtn").onclick = () => {
+        const link = document.getElementById("propertyMapLink").value;
+        const container = document.getElementById("mapPreviewContainer");
+        const iframe = document.getElementById("mapPreview");
+        
+        if(link && link.includes("google.com/maps")) {
+            iframe.src = link;
+            container.style.display = "block";
+        } else {
+            showToast("Please enter a valid Google Maps embed link", true);
+        }
+    };
+
+    // Add Property
+    document.getElementById("propertyForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const newProperty = {
+            name: document.getElementById("propertyName").value,
+            type: document.getElementById("propertyType").value,
+            governorate: document.getElementById("propertyGovernorate").value,
+            city: document.getElementById("propertyCity").value,
+            district: document.getElementById("propertyDistrict").value,
+            owner: document.getElementById("propertyOwner").value,
+            phone: document.getElementById("propertyPhone").value,
+            price: document.getElementById("propertyPrice").value || 0,
+            area: document.getElementById("propertyArea").value || 0,
+            mapLink: document.getElementById("propertyMapLink").value,
+            description: document.getElementById("propertyDescription").value,
+            addedBy: currentUser.name,
+            addedByRole: currentUser.role,
+            status: "Pending" 
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/properties/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newProperty)
+            });
+
+            if (response.ok) {
+                showToast("Property added successfully! Pending admin review.");
+                document.getElementById("propertyForm").reset();
+                propertyModal.style.display = "none";
+                document.getElementById("mapPreviewContainer").style.display = "none";
+                renderMemberProperties(); 
+            } else {
+                showToast("Failed to add property", true);
+            }
+        } catch (error) {
+            showToast("Server is offline.", true);
+        }
+    };
+
+    // Add Service
+    document.getElementById("serviceForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const newService = {
+            name: document.getElementById("serviceName").value,
+            category: document.getElementById("serviceCategory").value,
+            governorate: document.getElementById("serviceGovernorate").value,
+            city: document.getElementById("serviceCity").value,
+            provider: document.getElementById("serviceProvider").value,
+            phone: document.getElementById("servicePhone").value,
+            price: document.getElementById("servicePrice").value || 0,
+            description: document.getElementById("serviceDescription").value,
+            addedBy: currentUser.name,
+            addedByRole: currentUser.role,
+            status: "Pending"
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/services/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newService)
+            });
+
+            if (response.ok) {
+                showToast("Service added successfully! Pending admin review.");
+                document.getElementById("serviceForm").reset();
+                serviceModal.style.display = "none";
+                renderMemberServices(); 
+            } else {
+                showToast("Failed to add service", true);
+            }
+        } catch (error) {
+            showToast("Server is offline.", true);
+        }
+    };
+
+    // Render Properties
+    async function renderMemberProperties() {
+        const table = document.getElementById("memberPropertiesTable");
+        table.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Loading properties...</td></tr>";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/properties`);
+            const allProperties = await response.json();
+            myCachedProperties = allProperties.filter(p => p.addedBy === currentUser.name);
+            table.innerHTML = "";
+
+            if (myCachedProperties.length === 0) {
+                table.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#64748b;'>No properties added yet.</td></tr>";
+                return;
+            }
+
+            myCachedProperties.forEach((property, index) => {
+                let statusClass = property.status === "Approved" ? "approved" : (property.status === "Rejected" ? "rejected" : "pending");
+                table.innerHTML += `
+                    <tr>
+                        <td>${property.name}</td>
+                        <td>${property.type}</td>
+                        <td>${property.city}</td>
+                        <td><span class="status ${statusClass}">${property.status}</span></td>
+                        <td><button class="view-btn" onclick="openViewModal(${index})"><i class="fas fa-eye"></i> View</button></td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            table.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Failed to load.</td></tr>";
+        }
+    }
+
+    // View Modal Function
+    window.openViewModal = function(index) {
+        const property = myCachedProperties[index];
+        if(!property) return;
+
+        document.getElementById("viewName").textContent = property.name || "N/A";
+        document.getElementById("viewType").textContent = property.type || "N/A";
+        document.getElementById("viewGovernorate").textContent = property.governorate || "N/A";
+        document.getElementById("viewCity").textContent = property.city || "N/A";
+        document.getElementById("viewDistrict").textContent = property.district || "N/A";
+        document.getElementById("viewOwner").textContent = property.owner || "N/A";
+        document.getElementById("viewPhone").textContent = property.phone || "N/A";
+        document.getElementById("viewPrice").textContent = property.price || "0";
+        document.getElementById("viewArea").textContent = property.area || "0";
+        document.getElementById("viewDescription").textContent = property.description || "No description provided.";
+        
+        const mapLinkBtn = document.getElementById("viewMapLink");
+        if(property.mapLink) {
+            mapLinkBtn.href = property.mapLink;
+            mapLinkBtn.style.display = "inline-block";
+        } else {
+            mapLinkBtn.style.display = "none";
+        }
+
+        viewModal.style.display = "flex";
+    };
+
+    // Render Services
+    async function renderMemberServices() {
+        const table = document.getElementById("memberServicesTable");
+        table.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Loading services...</td></tr>";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/services`);
+            const allServices = await response.json();
+            const myServices = allServices.filter(s => s.addedBy === currentUser.name);
+            table.innerHTML = "";
+
+            if (myServices.length === 0) {
+                table.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#64748b;'>No services added yet.</td></tr>";
+                return;
+            }
+
+            myServices.forEach(service => {
+                let statusClass = service.status === "Approved" ? "approved" : (service.status === "Rejected" ? "rejected" : "pending");
+                table.innerHTML += `
+                    <tr>
+                        <td>${service.name}</td>
+                        <td>${service.category}</td>
+                        <td>${service.city}</td>
+                        <td><span class="status ${statusClass}">${service.status}</span></td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            table.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Failed to load.</td></tr>";
+        }
+    }
+
+    // Logout
+    document.getElementById("logoutBtn").onclick = () => {
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
+        window.location.href = "../login.html";
+    };
+
+    // Init
+    renderMemberProperties();
+    renderMemberServices();
+</script>
+
+</body>
+</html>

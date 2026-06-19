@@ -1,0 +1,531 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    height:100vh;
+    overflow:hidden;
+}
+
+.main-container{
+    display:flex;
+    height:100vh;
+}
+
+.left-panel{
+    width:50%;
+    background:
+linear-gradient(
+135deg,
+#031b4e,
+#072c67,
+#0d4f8b
+);
+    position:relative;
+    color:white;
+    overflow:hidden;
+}
+
+.left-panel::before{
+content:"";
+position:absolute;
+width:700px;
+height:700px;
+background:rgba(22,160,133,.15);
+border-radius:50%;
+top:-200px;
+left:-200px;
+filter:blur(60px);
+animation:float1 8s infinite ease-in-out;
+}
+
+.left-panel::after{
+content:"";
+position:absolute;
+width:500px;
+height:500px;
+background:rgba(255,255,255,.06);
+border-radius:50%;
+bottom:-100px;
+right:-100px;
+filter:blur(40px);
+animation:float2 10s infinite ease-in-out;
+}
+
+.overlay{
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,.15);
+}
+
+.content{
+    position:relative;
+    z-index:2;
+    padding:80px;
+    animation:
+slideInLeft 1s ease;
+}
+
+.logo-large{
+    width:140px;
+    padding:1px;
+    background:rgba(255,255,255,.95);
+    border-radius:100px;
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.2);
+    margin-bottom:25px;
+    transition:.4s ease;
+    border:1px solid rgba(2, 2, 2, 0.4);
+}
+
+.logo-large:hover{
+    transform:
+    translateY(-5px)
+    scale(1.03);
+}
+
+.content h1{
+    font-size:60px;
+    font-weight:700;
+}
+
+.content h2{
+    color:#16a085;
+    margin-bottom:20px;
+}
+
+.content p{
+    max-width:500px;
+}
+
+.features{
+    margin-top:60px;
+}
+
+.feature-card{
+    background:rgba(255,255,255,.08);
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:15px;
+    backdrop-filter:blur(10px);
+}
+
+.right-panel{
+    width:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#f8fafc;
+}
+
+.login-card{
+    width:460px;
+    background:rgba(255,255,255,.85);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.2);
+    padding:50px;
+    border-radius:30px;
+    box-shadow:
+    0 20px 60px rgba(0,0,0,.15);
+    transition:.4s ease;
+}
+
+.login-card:hover{
+    transform:translateY(-8px);
+    box-shadow:
+    0 35px 80px rgba(7,44,103,.25);
+}
+
+.logo-small{
+    width:200px;
+    display:block;
+    margin:auto;
+    margin-bottom:25px;
+    padding:12px;
+    background:white;
+    border-radius:24px;
+    transition:.3s ease;
+}
+
+.logo-small:hover{
+    transform:
+    scale(1.05);
+}
+
+.login-card h2{
+    text-align:center;
+    margin-top:5px;
+    margin-bottom:10px;
+    font-weight:700;
+    color:#072c67;
+}
+
+.login-card p{
+    text-align:center;
+    color:#64748b;
+    margin-bottom:25px;
+}
+
+.login-btn{
+height:55px;
+background:
+linear-gradient(
+135deg,
+#16a085,
+#1abc9c
+);
+border:none;
+border-radius:14px;
+font-size:16px;
+font-weight:600;
+transition:.35s;
+}
+
+.login-btn:hover{
+transform:translateY(-3px);
+box-shadow:
+0 15px 30px rgba(22,160,133,.35);
+}
+
+.form-control{
+height:55px;
+border-radius:14px;
+border:1px solid #dbe2ea;
+transition:.3s;
+}
+
+.form-control:focus{
+border-color:#16a085;
+box-shadow:
+0 0 0 4px rgba(22,160,133,.15);
+}
+
+.status-badge{
+display:inline-block;
+padding:8px 16px;
+background:#e8faf6;
+color:#16a085;
+border-radius:50px;
+font-size:12px;
+font-weight:600;
+margin-bottom:20px;
+}
+
+.floating-shapes{
+position:absolute;
+width:100%;
+height:100%;
+overflow:hidden;
+top:0;
+left:0;
+}
+
+.floating-shapes span{
+position:absolute;
+display:block;
+border-radius:50%;
+background:
+rgba(255,255,255,.08);
+backdrop-filter:blur(10px);
+animation:
+floatShape 15s infinite linear;
+}
+
+.floating-shapes span:nth-child(1){
+width:120px;
+height:120px;
+left:10%;
+bottom:-150px;
+animation-duration:18s;
+}
+
+.floating-shapes span:nth-child(2){
+width:70px;
+height:70px;
+left:30%;
+bottom:-120px;
+animation-duration:14s;
+}
+
+.floating-shapes span:nth-child(3){
+width:180px;
+height:180px;
+left:65%;
+bottom:-180px;
+animation-duration:22s;
+}
+
+.floating-shapes span:nth-child(4){
+width:90px;
+height:90px;
+left:85%;
+bottom:-130px;
+animation-duration:16s;
+}
+
+.input-error{
+    border:2px solid #ef4444 !important;
+    background:#fef2f2 !important;
+}
+
+.error-message{
+    color:#ef4444;
+    font-size:14px;
+    margin-top:10px;
+    text-align:center;
+}
+
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(40px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+
+@keyframes float1{
+0%,100%{
+transform:translateY(0);
+}
+50%{
+transform:translateY(-30px);
+}
+}
+
+
+@keyframes float2{
+0%,100%{
+transform:translateY(0);
+}
+50%{
+transform:translateY(25px);
+}
+}
+
+@keyframes floatShape{
+0%{
+transform:
+translateY(0)
+rotate(0deg);
+opacity:0;
+}
+20%{
+opacity:1;
+}
+80%{
+opacity:1;
+}
+100%{
+transform:
+translateY(-1100px)
+rotate(360deg);
+opacity:0;
+}
+}
+
+@keyframes slideInLeft{
+from{
+opacity:0;
+transform:
+translateX(-40px);
+}
+to{
+opacity:1;
+transform:
+translateX(0);
+}
+}
+/* ========================================= */
+/* DARK MODE THEME GLOBALS                   */
+/* ========================================= */
+
+/* إجبار الخلفية الأساسية للموقع كله */
+body.dark-theme, 
+body.dark-theme .dashboard, 
+body.dark-theme .main-content {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+/* القائمة الجانبية */
+body.dark-theme .sidebar {
+    background-color: #1e293b !important;
+    border-right: 1px solid #334155 !important;
+}
+
+body.dark-theme .sidebar ul li { color: #94a3b8 !important; }
+body.dark-theme .sidebar ul li:hover, body.dark-theme .sidebar ul li.active {
+    background-color: #334155 !important;
+    color: #fff !important;
+}
+
+/* كل العناوين والنصوص */
+body.dark-theme h1, 
+body.dark-theme h2, 
+body.dark-theme h3, 
+body.dark-theme p {
+    color: #f1f5f9 !important;
+}
+
+/* كل الكروت والجداول في الموقع */
+body.dark-theme .settings-container,
+body.dark-theme .settings-card,
+body.dark-theme .stat-card,
+body.dark-theme .activity-card,
+body.dark-theme .table-container,
+body.dark-theme .modal-content,
+body.dark-theme .welcome-card {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: none !important;
+}
+
+/* أجزاء الإعدادات */
+body.dark-theme .tabs-header,
+body.dark-theme .toggle-switch {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme .tab-btn { color: #94a3b8 !important; }
+body.dark-theme .tab-btn.active { 
+    background-color: #1e293b !important; 
+    color: #fff !important; 
+    border-bottom: 3px solid #3b82f6 !important; 
+}
+
+/* الجداول */
+body.dark-theme .members-table th { background-color: #0f172a !important; color: #f1f5f9 !important; border-bottom: 1px solid #334155 !important; }
+body.dark-theme .members-table td { border-bottom: 1px solid #334155 !important; color: #cbd5e1 !important; }
+body.dark-theme .members-table tr:hover { background-color: #334155 !important; }
+
+/* الانبوتس والـ Forms */
+body.dark-theme input, 
+body.dark-theme select, 
+body.dark-theme textarea {
+    background-color: #0f172a !important;
+    color: #fff !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-theme label { color: #cbd5e1 !important; }
+
+/* إجبار كل النصوص، العناوين، والتفاصيل على التحول للون الفاتح */
+body.dark-theme .main-content h1,
+body.dark-theme .main-content h2,
+body.dark-theme .main-content h3,
+body.dark-theme .main-content h4,
+body.dark-theme .main-content p,
+body.dark-theme .main-content label,
+body.dark-theme .main-content td,
+body.dark-theme .main-content th,
+body.dark-theme .sidebar span,
+body.dark-theme .main-content span:not(.status):not(.role-badge) {
+    color: #f8fafc !important;
+}
+
+/* تظبيط لون الديسكربشن (الوصف) جوه المودال بتاع الـ View */
+body.dark-theme .description-box,
+body.dark-theme .property-details p strong {
+    color: #cbd5e1 !important;
+    background-color: transparent !important;
+    border-color: #334155 !important;
+}
+
+/* ========================================= */
+/* إصلاح الشوائب البيضاء (Topbar & User Card)*/
+/* ========================================= */
+
+/* الشريط العلوي (Topbar) */
+body.dark-theme .topbar {
+    background-color: #1e293b !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+/* كارت المستخدم اللي فيه الاسم والبادج */
+body.dark-theme .user-card {
+    background-color: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+/* زرار القائمة (Toggle) في الوضع الليلي */
+body.dark-theme #toggleBtn {
+    color: #f8fafc !important;
+    background: transparent !important;
+}
+
+/* تأكيد إن النوافذ المنبثقة (Modals) وكل اللي جواها متناسق */
+body.dark-theme .modal-content,
+body.dark-theme .property-details {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-theme .modal-header {
+    border-bottom: 1px solid #334155 !important;
+}
+
+body.dark-theme .modal-header h2 {
+    color: #f8fafc !important;
+}
+/* ========================================= */
+/* إصلاح التوب بار وتصغير السايد بار         */
+/* ========================================= */
+
+/* 1. إصلاح لون التوب بار في الوضع الليلي (إزالة الشريط الفاتح) */
+body.dark-theme .topbar {
+    background-color: transparent !important;
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark-theme .user-card {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-theme #toggleBtn {
+    color: #f8fafc !important;
+    background: transparent;
+    border: none;
+}
+
+/* 2. كود تصغير السايد بار لما تدوس على الأيقونة */
+.sidebar {
+    transition: width 0.3s ease !important;
+    overflow-x: hidden;
+}
+.sidebar.active {
+    width: 85px !important;
+}
+.sidebar.active .brand span,
+.sidebar.active ul li span {
+    display: none !important; /* إخفاء النصوص */
+}
+.sidebar.active ul li {
+    justify-content: center;
+    padding: 15px 0;
+}
+.sidebar.active ul li i {
+    margin-right: 0 !important;
+    font-size: 20px;
+}
+.sidebar.active .logout-btn {
+    font-size: 0; /* إخفاء كلمة Logout */
+    padding: 15px 0;
+    text-align: center;
+}
+.sidebar.active .logout-btn::after {
+    content: "\f2f5"; /* وضع أيقونة خروج بدالها */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 20px;
+    color: white;
+}

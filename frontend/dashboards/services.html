@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services - Aqar-Go</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+<script>
+    // ==========================================
+    // 0. الحماية (Security Check)
+    // ==========================================
+    const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+    if (!currentUser || currentUser.role !== 'owner') {
+        window.location.replace("../login.html");
+    }
+</script>
+
+<div id="serviceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Service</h2>
+            <span id="closeModal">&times;</span>
+        </div>
+        <form id="serviceForm">
+            <input type="text" id="serviceName" placeholder="Service Name" required>
+            <select id="serviceCategory">
+                <option>Finishing Company</option>
+                <option>Cleaning Company</option>
+                <option>Electrician</option>
+                <option>Plumber</option>
+                <option>Painter</option>
+                <option>Carpenter</option>
+                <option>AC Technician</option>
+            </select>
+            <input type="text" id="serviceGovernorate" placeholder="Governorate">
+            <input type="text" id="serviceCity" placeholder="City">
+            <input type="text" id="servicePhone" placeholder="Phone Number">
+            <input type="email" id="serviceEmail" placeholder="Email">
+            <textarea id="serviceDescription" placeholder="Description"></textarea>
+            <button type="submit">Save Service</button>
+        </form>
+    </div>
+</div>
+
+<div id="viewServiceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Service Details</h2>
+            <span id="closeViewModal">&times;</span>
+        </div>
+        <div class="property-details">
+            <p><strong>Name:</strong> <span id="viewName"></span></p>
+            <p><strong>Category:</strong> <span id="viewCategory"></span></p>
+            <p><strong>Governorate:</strong> <span id="viewGovernorate"></span></p>
+            <p><strong>City:</strong> <span id="viewCity"></span></p>
+            <p><strong>Phone:</strong> <span id="viewPhone"></span></p>
+            <p><strong>Email:</strong> <span id="viewEmail"></span></p>
+            <p><strong>Description:</strong></p>
+            <div id="viewDescription" class="description-box"></div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard">
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="../assets/logo.png">
+            <span>Aqar-Go</span>
+        </div>
+        <ul>
+            <li onclick="window.location.href='owner-dashboard.html'"><i class="fas fa-chart-line"></i><span>Dashboard</span></li>
+            <li onclick="window.location.href='properties.html'"><i class="fas fa-building"></i><span>Properties</span></li>
+            <li class="active"><i class="fas fa-tools"></i><span>Services</span></li>
+            <li onclick="window.location.href='team-members.html'"><i class="fas fa-users"></i><span>Team Members</span></li>
+            <li onclick="window.location.href='pending-reviews.html'"><i class="fas fa-clock"></i><span>Pending Reviews</span></li>
+            <li onclick="window.location.href='analytics.html'"><i class="fas fa-chart-pie"></i><span>Analytics</span></li>
+            <li onclick="window.location.href='settings.html'"><i class="fas fa-gear"></i><span>Settings</span></li>
+        </ul>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Services</h1>
+                <p>Manage all service providers</p>
+            </div>
+            <button id="openModal" class="add-member-btn"><i class="fas fa-plus"></i> Add Service</button>
+        </div>
+
+        <div class="table-container">
+            <table class="members-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>City</th>
+                        <th>Phone</th>
+                        <th>Added By</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="servicesTableBody"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<script src="../js/config.js"></script>
+<script>
+// ==========================================
+// 1. تصميم كارت الإشعارات ونافذة التأكيد
+// ==========================================
+const uiStyles = document.createElement('style');
+uiStyles.innerHTML = `
+    .custom-toast {
+        position: fixed; bottom: 30px; right: 30px; background: #072c67; color: white; padding: 15px 25px;
+        border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; font-weight: 500;
+        transform: translateX(150%); transition: transform 0.4s ease; z-index: 9999;
+    }
+    .custom-toast.show { transform: translateX(0); }
+    .custom-toast.error { background: #ef4444; }
+
+    .custom-confirm-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+        z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .custom-confirm-overlay.show { opacity: 1; pointer-events: auto; }
+    .custom-confirm-box {
+        background: white; padding: 25px; border-radius: 10px; text-align: center; max-width: 400px; width: 90%; transform: translateY(-20px); transition: transform 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .custom-confirm-overlay.show .custom-confirm-box { transform: translateY(0); }
+    .custom-confirm-box h3 { margin-top: 0; color: #ef4444; margin-bottom: 15px; }
+    .custom-confirm-box p { color: #64748b; margin-bottom: 25px; font-size: 16px; }
+    .custom-confirm-buttons { display: flex; justify-content: center; gap: 15px; }
+    .custom-confirm-btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s;}
+    .btn-cancel { background: #e2e8f0; color: #475569; }
+    .btn-cancel:hover { background: #cbd5e1; }
+    .btn-confirm-delete { background: #ef4444; color: white; }
+    .btn-confirm-delete:hover { background: #dc2626; }
+`;
+document.head.appendChild(uiStyles);
+
+const toastDiv = document.createElement('div');
+toastDiv.id = 'toastNotification';
+toastDiv.className = 'custom-toast';
+toastDiv.innerHTML = `<i class="fas fa-info-circle"></i> <span id="toastMessage"></span>`;
+document.body.appendChild(toastDiv);
+
+const confirmDiv = document.createElement('div');
+confirmDiv.className = 'custom-confirm-overlay';
+confirmDiv.innerHTML = `
+    <div class="custom-confirm-box">
+        <h3>Delete Service</h3>
+        <p id="confirmMessage">Are you sure you want to delete this service forever?</p>
+        <div class="custom-confirm-buttons">
+            <button class="custom-confirm-btn btn-cancel" id="confirmNoBtn">Cancel</button>
+            <button class="custom-confirm-btn btn-confirm-delete" id="confirmYesBtn">Yes, Delete</button>
+        </div>
+    </div>
+`;
+document.body.appendChild(confirmDiv);
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById("toastNotification");
+    document.getElementById("toastMessage").textContent = message;
+    if(isError) toast.classList.add("error"); else toast.classList.remove("error");
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 4000);
+}
+
+function customConfirm() {
+    return new Promise((resolve) => {
+        const overlay = document.querySelector('.custom-confirm-overlay');
+        overlay.classList.add('show');
+        document.getElementById('confirmYesBtn').onclick = () => { overlay.classList.remove('show'); resolve(true); };
+        document.getElementById('confirmNoBtn').onclick = () => { overlay.classList.remove('show'); resolve(false); };
+    });
+}
+
+// ==========================================
+// 2. باقي كود الصفحة
+// ==========================================
+const modal = document.getElementById("serviceModal");
+const openBtn = document.getElementById("openModal");
+const closeBtn = document.getElementById("closeModal");
+const form = document.getElementById("serviceForm");
+const tableBody = document.getElementById("servicesTableBody");
+const viewModal = document.getElementById("viewServiceModal");
+
+let services = [];
+let editingId = null;
+
+openBtn.onclick = () => { form.reset(); editingId = null; modal.style.display = "flex"; };
+closeBtn.onclick = () => { modal.style.display = "none"; };
+document.getElementById("closeViewModal").onclick = () => { viewModal.style.display = "none"; };
+window.onclick = (e) => { 
+    if(e.target === modal) modal.style.display = "none"; 
+    if(e.target === viewModal) viewModal.style.display = "none"; 
+};
+
+async function fetchServices() {
+    tableBody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Loading services from database...</td></tr>";
+    try {
+        const response = await fetch(`${API_BASE_URL}/services`);
+        services = await response.json();
+        renderServices();
+    } catch (error) {
+        tableBody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>Failed to load services.</td></tr>";
+    }
+}
+
+function renderServices() {
+    tableBody.innerHTML = "";
+    if (services.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No services found.</td></tr>";
+        return;
+    }
+
+    services.forEach(service => {
+        let statusClass = "pending";
+        if(service.status === "Approved") statusClass = "approved";
+        if(service.status === "Rejected") statusClass = "rejected";
+
+        tableBody.innerHTML += `
+        <tr>
+            <td>${service.name || "-"}</td>
+            <td>${service.category || "-"}</td>
+            <td>${service.city || "-"}</td>
+            <td>${service.phone || "-"}</td>
+            <td>${service.addedBy || "Owner"}</td>
+            <td><span class="status ${statusClass}">${service.status}</span></td>
+            <td>
+                <button class="action-btn" onclick="viewService('${service._id}')">View</button>
+                <button class="action-btn" onclick="editService('${service._id}')">Edit</button>
+                <button class="action-btn delete" onclick="deleteService('${service._id}')">Delete</button>
+            </td>
+        </tr>
+        `;
+    });
+}
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const serviceData = {
+        name: document.getElementById("serviceName").value,
+        category: document.getElementById("serviceCategory").value,
+        governorate: document.getElementById("serviceGovernorate").value,
+        city: document.getElementById("serviceCity").value,
+        phone: document.getElementById("servicePhone").value,
+        email: document.getElementById("serviceEmail").value,
+        description: document.getElementById("serviceDescription").value,
+        addedBy: currentUser.name,
+        addedByRole: currentUser.role
+    };
+
+    try {
+        let url = `${API_BASE_URL}/services/add`;
+        let method = 'POST';
+
+        if (editingId) {
+            url = `${API_BASE_URL}/services/update/${editingId}`;
+            method = 'PUT';
+        } else {
+            if(currentUser.role === 'owner') serviceData.status = 'Approved';
+        }
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(serviceData)
+        });
+
+        if (response.ok) {
+            showToast(editingId ? "Service Updated Successfully!" : "Service Added Successfully!");
+            form.reset();
+            modal.style.display = "none";
+            editingId = null;
+            fetchServices();
+        } else {
+            showToast("Failed to save service", true);
+        }
+    } catch (error) {
+        showToast("Server Error!", true);
+    }
+});
+
+async function deleteService(id) {
+    const isConfirmed = await customConfirm();
+    if (!isConfirmed) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/services/delete/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showToast("Service deleted successfully!");
+            fetchServices(); 
+        } else {
+            showToast("Failed to delete", true);
+        }
+    } catch (error) {
+        showToast("Server connection error.", true);
+    }
+}
+
+function editService(id) {
+    const service = services.find(s => s._id === id);
+    if(!service) return;
+
+    editingId = id;
+    document.getElementById("serviceName").value = service.name || "";
+    document.getElementById("serviceCategory").value = service.category || "";
+    document.getElementById("serviceGovernorate").value = service.governorate || "";
+    document.getElementById("serviceCity").value = service.city || "";
+    document.getElementById("servicePhone").value = service.phone || "";
+    document.getElementById("serviceEmail").value = service.email || "";
+    document.getElementById("serviceDescription").value = service.description || "";
+
+    modal.style.display = "flex";
+}
+
+function viewService(id) {
+    const service = services.find(s => s._id === id);
+    if(!service) return;
+
+    document.getElementById("viewName").textContent = service.name || "-";
+    document.getElementById("viewCategory").textContent = service.category || "-";
+    document.getElementById("viewGovernorate").textContent = service.governorate || "-";
+    document.getElementById("viewCity").textContent = service.city || "-";
+    document.getElementById("viewPhone").textContent = service.phone || "-";
+    document.getElementById("viewEmail").textContent = service.email || "-";
+    document.getElementById("viewDescription").textContent = service.description || "-";
+
+    viewModal.style.display = "flex";
+}
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
+    window.location.href = "../login.html";
+});
+
+// تشغيل جلب الداتا
+fetchServices();
+
+// كود تشغيل الوضع الليلي
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+}
+</script>
+</body>
+</html>

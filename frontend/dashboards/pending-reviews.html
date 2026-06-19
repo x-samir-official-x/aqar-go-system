@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Reviews</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="../assets/logo.png">
+            <span>Aqar-Go</span>
+        </div>
+        <ul>
+            <li onclick="window.location.href='owner-dashboard.html'">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </li>
+            <li onclick="window.location.href='properties.html'">
+                <i class="fas fa-building"></i>
+                <span>Properties</span>
+            </li>
+            <li onclick="window.location.href='services.html'">
+                <i class="fas fa-tools"></i>
+                <span>Services</span>
+            </li>
+            <li onclick="window.location.href='team-members.html'">
+                <i class="fas fa-users"></i>
+                <span>Team Members</span>
+            </li>
+            <li class="active">
+                <i class="fas fa-clock"></i>
+                <span>Pending Reviews</span>
+            </li>
+            <li onclick="window.location.href='analytics.html'">
+                <i class="fas fa-chart-pie"></i>
+                <span>Analytics</span>
+            </li>
+            <li onclick="window.location.href='settings.html'">
+                <i class="fas fa-gear"></i>
+                <span>Settings</span>
+            </li>
+        </ul>
+        
+        <button class="logout-btn" id="logoutBtn">
+            Logout
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Pending Reviews</h1>
+                <p>Review properties and services submitted by members</p>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2>Pending Properties</h2>
+            <table class="members-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Added By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingPropertiesTable">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <h2>Pending Services</h2>
+            <table class="members-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Added By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingServicesTable">
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+</div>
+
+<script src="../js/config.js"></script>
+<script>
+// ==========================================
+// 0. الحماية (Security Check)
+// ==========================================
+const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+if (!currentUser || currentUser.role !== 'owner') {
+    window.location.replace("../login.html");
+}
+
+// ==========================================
+// تسجيل الخروج
+// ==========================================
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
+        window.location.href = "../login.html";
+    });
+}
+
+const pendingPropertiesTable = document.getElementById("pendingPropertiesTable");
+const pendingServicesTable = document.getElementById("pendingServicesTable");
+
+// ==========================================
+// 1. تصميم كارت الإشعارات (Toast) ونافذة التأكيد (Confirm Modal)
+// ==========================================
+const uiStyles = document.createElement('style');
+uiStyles.innerHTML = `
+    /* Toast CSS */
+    .custom-toast {
+        position: fixed; bottom: 30px; right: 30px;
+        background: #072c67; color: white; padding: 15px 25px;
+        border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+        display: flex; align-items: center; gap: 10px; font-weight: 500;
+        transform: translateX(150%); transition: transform 0.4s ease; z-index: 9999;
+    }
+    .custom-toast.show { transform: translateX(0); }
+    .custom-toast.error { background: #ef4444; }
+
+    /* Confirm Modal CSS */
+    .custom-confirm-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+        z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .custom-confirm-overlay.show { opacity: 1; pointer-events: auto; }
+    .custom-confirm-box {
+        background: white; padding: 25px; border-radius: 10px; text-align: center;
+        max-width: 400px; width: 90%; transform: translateY(-20px); transition: transform 0.3s ease;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .custom-confirm-overlay.show .custom-confirm-box { transform: translateY(0); }
+    .custom-confirm-box h3 { margin-top: 0; color: #072c67; margin-bottom: 15px; }
+    .custom-confirm-box p { color: #64748b; margin-bottom: 25px; font-size: 16px; }
+    .custom-confirm-buttons { display: flex; justify-content: center; gap: 15px; }
+    .custom-confirm-btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s;}
+    .btn-cancel { background: #e2e8f0; color: #475569; }
+    .btn-cancel:hover { background: #cbd5e1; }
+    .btn-confirm { background: #072c67; color: white; }
+    .btn-confirm:hover { background: #051f4e; }
+`;
+document.head.appendChild(uiStyles);
+
+// HTML for Toast
+const toastDiv = document.createElement('div');
+toastDiv.id = 'toastNotification';
+toastDiv.className = 'custom-toast';
+toastDiv.innerHTML = `<i class="fas fa-info-circle"></i> <span id="toastMessage"></span>`;
+document.body.appendChild(toastDiv);
+
+// HTML for Confirm Modal
+const confirmDiv = document.createElement('div');
+confirmDiv.className = 'custom-confirm-overlay';
+confirmDiv.innerHTML = `
+    <div class="custom-confirm-box">
+        <h3>Confirm Action</h3>
+        <p id="confirmMessage">Are you sure?</p>
+        <div class="custom-confirm-buttons">
+            <button class="custom-confirm-btn btn-cancel" id="confirmNoBtn">Cancel</button>
+            <button class="custom-confirm-btn btn-confirm" id="confirmYesBtn">Yes, I'm sure</button>
+        </div>
+    </div>
+`;
+document.body.appendChild(confirmDiv);
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById("toastNotification");
+    document.getElementById("toastMessage").textContent = message;
+    if(isError) toast.classList.add("error"); else toast.classList.remove("error");
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 4000);
+}
+
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const overlay = document.querySelector('.custom-confirm-overlay');
+        document.getElementById('confirmMessage').textContent = message;
+        
+        const confirmBtn = document.getElementById('confirmYesBtn');
+        if (message.includes('Rejected')) {
+            confirmBtn.style.background = '#ef4444';
+            confirmBtn.onmouseover = () => confirmBtn.style.background = '#dc2626';
+            confirmBtn.onmouseout = () => confirmBtn.style.background = '#ef4444';
+        } else {
+            confirmBtn.style.background = '#072c67';
+            confirmBtn.onmouseover = () => confirmBtn.style.background = '#051f4e';
+            confirmBtn.onmouseout = () => confirmBtn.style.background = '#072c67';
+        }
+
+        overlay.classList.add('show');
+
+        confirmBtn.onclick = () => { overlay.classList.remove('show'); resolve(true); };
+        document.getElementById('confirmNoBtn').onclick = () => { overlay.classList.remove('show'); resolve(false); };
+    });
+}
+
+// ==========================================
+// 2. دالة جلب وعرض المراجعات المعلقة
+// ==========================================
+async function renderPendingReviews() {
+    pendingPropertiesTable.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Loading properties...</td></tr>";
+    pendingServicesTable.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Loading services...</td></tr>";
+
+    try {
+        const propRes = await fetch(`${API_BASE_URL}/properties`);
+        const properties = await propRes.json();
+        const pendingProperties = properties.filter(p => p.status === "Pending");
+
+        pendingPropertiesTable.innerHTML = "";
+        if (pendingProperties.length === 0) {
+            pendingPropertiesTable.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#64748b;'>No pending properties.</td></tr>";
+        } else {
+            pendingProperties.forEach(property => {
+                pendingPropertiesTable.innerHTML += `
+                <tr>
+                    <td>${property.name}</td>
+                    <td>${property.type}</td>
+                    <td>${property.addedBy}</td>
+                    <td>
+                        <button onclick="updatePropertyStatus('${property._id}', 'Approved')" class="action-btn">Approve</button>
+                        <button onclick="updatePropertyStatus('${property._id}', 'Rejected')" class="action-btn delete">Reject</button>
+                    </td>
+                </tr>
+                `;
+            });
+        }
+
+        const servRes = await fetch(`${API_BASE_URL}/services`);
+        const services = await servRes.json();
+        const pendingServices = services.filter(s => s.status === "Pending");
+
+        pendingServicesTable.innerHTML = "";
+        if (pendingServices.length === 0) {
+            pendingServicesTable.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#64748b;'>No pending services.</td></tr>";
+        } else {
+            pendingServices.forEach(service => {
+                pendingServicesTable.innerHTML += `
+                <tr>
+                    <td>${service.name}</td>
+                    <td>${service.category}</td>
+                    <td>${service.addedBy}</td>
+                    <td>
+                        <button onclick="updateServiceStatus('${service._id}', 'Approved')" class="action-btn">Approve</button>
+                        <button onclick="updateServiceStatus('${service._id}', 'Rejected')" class="action-btn delete">Reject</button>
+                    </td>
+                </tr>
+                `;
+            });
+        }
+    } catch (error) {
+        pendingPropertiesTable.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Failed to connect to server.</td></tr>";
+        pendingServicesTable.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Failed to connect to server.</td></tr>";
+    }
+}
+
+// ==========================================
+// 3. دوال تحديث الحالة في قاعدة البيانات
+// ==========================================
+async function updatePropertyStatus(id, newStatus) {
+    const actionText = newStatus === 'Approved' ? 'approve' : 'reject';
+    const isConfirmed = await customConfirm(`Are you sure you want to ${actionText} this property?`);
+    
+    if (!isConfirmed) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/properties/update-status/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (response.ok) {
+            showToast(`Property ${newStatus} successfully!`);
+            renderPendingReviews(); 
+        } else {
+            showToast("Failed to update property", true);
+        }
+    } catch (error) {
+        showToast("Connection error!", true);
+    }
+}
+
+async function updateServiceStatus(id, status) {
+    const isConfirmed = await customConfirm(`Are you sure you want to mark this service as ${status}?`);
+    if (!isConfirmed) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/services/update-status/${id}`, {  
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: status })
+        });
+
+        if (response.ok) {
+            showToast(`Service has been ${status} successfully!`);
+            renderPendingReviews(); 
+        } else {
+            showToast("Failed to update status", true);
+        }
+    } catch (error) {
+        showToast("Server connection error.", true);
+    }
+}
+
+renderPendingReviews();
+
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+}
+</script>
+
+</body>
+</html>

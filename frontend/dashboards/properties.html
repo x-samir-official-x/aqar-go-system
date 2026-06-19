@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Properties - Aqar-Go</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+<script>
+    // ==========================================
+    // 0. الحماية (Security Check)
+    // ==========================================
+    const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+    if (!currentUser || currentUser.role !== 'owner') {
+        window.location.replace("../login.html");
+    }
+</script>
+
+<div id="propertyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Property</h2>
+            <span id="closeModal">&times;</span>
+        </div>
+        <form id="propertyForm">
+            <input type="text" id="propertyName" placeholder="Property Name" required>
+            <select id="propertyType">
+                <option>Apartment</option>
+                <option>Villa</option>
+                <option>Office</option>
+                <option>Land</option>
+                <option>Cafe</option>
+                <option>Shop</option>
+            </select>
+            <input type="text" id="propertyGovernorate" placeholder="Governorate" required>
+            <input type="text" id="propertyCity" placeholder="City" required>
+            <input type="text" id="propertyDistrict" placeholder="District">
+            <input type="text" id="propertyOwner" placeholder="Owner Name">
+            <input type="text" id="propertyPhone" placeholder="Phone Number">
+            <input type="number" id="propertyPrice" placeholder="Price">
+            <input type="number" id="propertyArea" placeholder="Area (m²)">
+            <input type="url" id="propertyMapLink" placeholder="Google Maps Link">
+
+            <button type="button" id="openMapBtn" class="map-btn">📍 Open Map</button>
+
+            <div id="mapPreviewContainer">
+                <iframe id="mapPreview" loading="lazy"></iframe>
+            </div>
+
+            <textarea id="propertyDescription" placeholder="Property Description"></textarea>
+            <button type="submit">Save Property</button>
+        </form>
+    </div>
+</div>
+
+<div class="dashboard">
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="../assets/logo.png">
+            <span>Aqar-Go</span>
+        </div>
+        <ul>
+            <li onclick="window.location.href='owner-dashboard.html'"><i class="fas fa-chart-line"></i><span>Dashboard</span></li>
+            <li class="active"><i class="fas fa-building"></i><span>Properties</span></li>
+            <li onclick="window.location.href='services.html'"><i class="fas fa-tools"></i><span>Services</span></li>
+            <li onclick="window.location.href='team-members.html'"><i class="fas fa-users"></i><span>Team Members</span></li>
+            <li onclick="window.location.href='pending-reviews.html'"><i class="fas fa-clock"></i><span>Pending Reviews</span></li>
+            <li onclick="window.location.href='analytics.html'"><i class="fas fa-chart-pie"></i><span>Analytics</span></li>
+            <li onclick="window.location.href='settings.html'"><i class="fas fa-gear"></i><span>Settings</span></li>
+        </ul>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Properties</h1>
+                <p>Manage all property records</p>
+            </div>
+            <button id="openModal" class="add-member-btn"><i class="fas fa-plus"></i> Add Property</button>
+        </div>
+
+        <div class="properties-toolbar">
+            <input type="text" id="searchProperty" placeholder="Search property...">
+            <select id="propertyFilter">
+                <option value="all">All Types</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa</option>
+                <option value="Office">Office</option>
+                <option value="Land">Land</option>
+                <option value="Cafe">Cafe</option>
+                <option value="Shop">Shop</option>
+            </select>
+        </div>
+
+        <div class="property-stats">
+            <div class="property-stat-card"><h3>Total</h3><h2 id="totalProperties">0</h2></div>
+            <div class="property-stat-card"><h3>Apartments</h3><h2 id="totalApartments">0</h2></div>
+            <div class="property-stat-card"><h3>Villas</h3><h2 id="totalVillas">0</h2></div>
+            <div class="property-stat-card"><h3>Offices</h3><h2 id="totalOffices">0</h2></div>
+            <div class="property-stat-card"><h3>Cafe</h3><h2 id="totalCafes">0</h2></div>
+            <div class="property-stat-card"><h3>Shop</h3><h2 id="totalShops">0</h2></div>
+        </div>
+
+        <div class="table-container">
+            <table class="members-table">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Type</th><th>City</th><th>Price</th><th>Added By</th><th>Status</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="propertiesTableBody"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<div id="viewPropertyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Property Details</h2>
+            <span id="closeViewModal">&times;</span>
+        </div>
+        <div class="property-details">
+            <p><strong>Name:</strong> <span id="viewName"></span></p>
+            <p><strong>Type:</strong> <span id="viewType"></span></p>
+            <p><strong>Governorate:</strong> <span id="viewGovernorate"></span></p>
+            <p><strong>City:</strong> <span id="viewCity"></span></p>
+            <p><strong>District:</strong> <span id="viewDistrict"></span></p>
+            <p><strong>Owner:</strong> <span id="viewOwner"></span></p>
+            <p><strong>Phone:</strong> <span id="viewPhone"></span></p>
+            <p><strong>Price:</strong> <span id="viewPrice"></span></p>
+            <p><strong>Area:</strong> <span id="viewArea"></span></p>
+            <p><strong>Description:</strong></p>
+            <div id="viewDescription" class="description-box"></div>
+            <br>
+            <button id="viewMapBtn" class="action-btn" style="margin-top: 15px;">📍 Open Location</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script>
+// ==========================================
+// 1. تصميم كارت الإشعارات ونافذة التأكيد
+// ==========================================
+const uiStyles = document.createElement('style');
+uiStyles.innerHTML = `
+    .custom-toast {
+        position: fixed; bottom: 30px; right: 30px; background: #072c67; color: white; padding: 15px 25px;
+        border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; font-weight: 500;
+        transform: translateX(150%); transition: transform 0.4s ease; z-index: 9999;
+    }
+    .custom-toast.show { transform: translateX(0); }
+    .custom-toast.error { background: #ef4444; }
+
+    .custom-confirm-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+        z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .custom-confirm-overlay.show { opacity: 1; pointer-events: auto; }
+    .custom-confirm-box {
+        background: white; padding: 25px; border-radius: 10px; text-align: center; max-width: 400px; width: 90%; transform: translateY(-20px); transition: transform 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .custom-confirm-overlay.show .custom-confirm-box { transform: translateY(0); }
+    .custom-confirm-box h3 { margin-top: 0; color: #ef4444; margin-bottom: 15px; }
+    .custom-confirm-box p { color: #64748b; margin-bottom: 25px; font-size: 16px; }
+    .custom-confirm-buttons { display: flex; justify-content: center; gap: 15px; }
+    .custom-confirm-btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s;}
+    .btn-cancel { background: #e2e8f0; color: #475569; }
+    .btn-cancel:hover { background: #cbd5e1; }
+    .btn-confirm-delete { background: #ef4444; color: white; }
+    .btn-confirm-delete:hover { background: #dc2626; }
+`;
+document.head.appendChild(uiStyles);
+
+const toastDiv = document.createElement('div');
+toastDiv.id = 'toastNotification';
+toastDiv.className = 'custom-toast';
+toastDiv.innerHTML = `<i class="fas fa-info-circle"></i> <span id="toastMessage"></span>`;
+document.body.appendChild(toastDiv);
+
+const confirmDiv = document.createElement('div');
+confirmDiv.className = 'custom-confirm-overlay';
+confirmDiv.innerHTML = `
+    <div class="custom-confirm-box">
+        <h3>Delete Property</h3>
+        <p id="confirmMessage">Are you sure you want to delete this property forever?</p>
+        <div class="custom-confirm-buttons">
+            <button class="custom-confirm-btn btn-cancel" id="confirmNoBtn">Cancel</button>
+            <button class="custom-confirm-btn btn-confirm-delete" id="confirmYesBtn">Yes, Delete</button>
+        </div>
+    </div>
+`;
+document.body.appendChild(confirmDiv);
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById("toastNotification");
+    document.getElementById("toastMessage").textContent = message;
+    if(isError) toast.classList.add("error"); else toast.classList.remove("error");
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 4000);
+}
+
+function customConfirm() {
+    return new Promise((resolve) => {
+        const overlay = document.querySelector('.custom-confirm-overlay');
+        overlay.classList.add('show');
+        document.getElementById('confirmYesBtn').onclick = () => { overlay.classList.remove('show'); resolve(true); };
+        document.getElementById('confirmNoBtn').onclick = () => { overlay.classList.remove('show'); resolve(false); };
+    });
+}
+
+// ==========================================
+// 2. باقي كود الصفحة 
+// ==========================================
+const modal = document.getElementById("propertyModal");
+const openBtn = document.getElementById("openModal");
+const closeBtn = document.getElementById("closeModal");
+const propertyForm = document.getElementById("propertyForm");
+const tableBody = document.getElementById("propertiesTableBody");
+
+let properties = [];
+let filteredProperties = [];
+let editingId = null; 
+
+openBtn.onclick = () => { propertyForm.reset(); editingId = null; modal.style.display = "flex"; };
+closeBtn.onclick = () => { modal.style.display = "none"; };
+window.onclick = (e) => { if(e.target === modal) modal.style.display = "none"; };
+
+async function fetchProperties() {
+    tableBody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Loading properties from database...</td></tr>";
+    try {
+        const response = await fetch(`${API_BASE_URL}/properties`);
+        properties = await response.json();
+        filteredProperties = [...properties];
+        applyFilters(); 
+    } catch (error) {
+        tableBody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:red;'>Failed to load properties.</td></tr>";
+    }
+}
+
+function renderProperties() {
+    document.getElementById("totalProperties").textContent = filteredProperties.length;
+    document.getElementById("totalCafes").textContent = filteredProperties.filter(p => p.type === "Cafe").length;
+    document.getElementById("totalShops").textContent = filteredProperties.filter(p => p.type === "Shop").length;
+    document.getElementById("totalApartments").textContent = filteredProperties.filter(p => p.type === "Apartment").length;
+    document.getElementById("totalVillas").textContent = filteredProperties.filter(p => p.type === "Villa").length;
+    document.getElementById("totalOffices").textContent = filteredProperties.filter(p => p.type === "Office").length;
+
+    tableBody.innerHTML = "";
+    if(filteredProperties.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No properties found.</td></tr>";
+        return;
+    }
+
+    filteredProperties.forEach((property) => {
+        let statusClass = "pending";
+        if(property.status === "Approved") statusClass = "approved";
+        if(property.status === "Rejected") statusClass = "rejected";
+
+        tableBody.innerHTML += `
+        <tr>
+            <td>${property.name}</td>
+            <td>${property.type}</td>
+            <td>${property.city}</td>
+            <td>${property.price} EGP</td>
+            <td>${property.addedBy || "Owner"}</td>
+            <td><span class="status ${statusClass}">${property.status}</span></td>
+            <td>
+                <button class="action-btn" onclick="viewProperty('${property._id}')">View</button>
+                <button class="action-btn" onclick="editProperty('${property._id}')">Edit</button>
+                <button class="action-btn delete" onclick="deleteProperty('${property._id}')">Delete</button>
+            </td>
+        </tr>
+        `;
+    });
+}
+
+propertyForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const propertyData = {
+        name: document.getElementById("propertyName").value,
+        type: document.getElementById("propertyType").value,
+        governorate: document.getElementById("propertyGovernorate").value,
+        city: document.getElementById("propertyCity").value,
+        district: document.getElementById("propertyDistrict").value,
+        owner: document.getElementById("propertyOwner").value,
+        phone: document.getElementById("propertyPhone").value,
+        price: document.getElementById("propertyPrice").value || 0,
+        area: document.getElementById("propertyArea").value || 0,
+        description: document.getElementById("propertyDescription").value,
+        mapLink: document.getElementById("propertyMapLink").value,
+        addedBy: currentUser.name,
+        addedByRole: currentUser.role
+    };
+
+    try {
+        let url = `${API_BASE_URL}/properties/add`;
+        let method = 'POST';
+        
+        if (editingId) {
+            url = `${API_BASE_URL}/properties/update/${editingId}`;
+            method = 'PUT';
+        } else {
+            if(currentUser.role === 'owner') propertyData.status = 'Approved';
+        }
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(propertyData)
+        });
+
+        if (response.ok) {
+            showToast(editingId ? "Property Updated Successfully!" : "Property Added Successfully!");
+            propertyForm.reset();
+            modal.style.display = "none";
+            editingId = null;
+            fetchProperties(); 
+        } else {
+            showToast("Failed to save property.", true);
+        }
+    } catch (error) {
+        showToast("Server Error!", true);
+    }
+});
+
+async function deleteProperty(id) {
+    const isConfirmed = await customConfirm();
+    if (!isConfirmed) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/properties/delete/${id}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            showToast("Property deleted successfully!");
+            fetchProperties();
+        } else {
+            showToast("Failed to delete", true);
+        }
+    } catch (error) {
+        showToast("Server connection error.", true);
+    }
+}
+
+function editProperty(id) {
+    const property = properties.find(p => p._id === id);
+    if(!property) return;
+    
+    editingId = id;
+    document.getElementById("propertyName").value = property.name || "";
+    document.getElementById("propertyType").value = property.type || "Apartment";
+    document.getElementById("propertyGovernorate").value = property.governorate || "";
+    document.getElementById("propertyCity").value = property.city || "";
+    document.getElementById("propertyDistrict").value = property.district || "";
+    document.getElementById("propertyOwner").value = property.owner || "";
+    document.getElementById("propertyPhone").value = property.phone || "";
+    document.getElementById("propertyPrice").value = property.price || "";
+    document.getElementById("propertyArea").value = property.area || "";
+    document.getElementById("propertyDescription").value = property.description || "";
+    document.getElementById("propertyMapLink").value = property.mapLink || "";
+    
+    modal.style.display = "flex";
+}
+
+const viewModal = document.getElementById("viewPropertyModal");
+document.getElementById("closeViewModal").onclick = () => { viewModal.style.display = "none"; };
+
+function viewProperty(id) {
+    const property = properties.find(p => p._id === id);
+    if(!property) return;
+
+    document.getElementById("viewName").textContent = property.name || "-";
+    document.getElementById("viewType").textContent = property.type || "-";
+    document.getElementById("viewGovernorate").textContent = property.governorate || "-";
+    document.getElementById("viewCity").textContent = property.city || "-";
+    document.getElementById("viewDistrict").textContent = property.district || "-";
+    document.getElementById("viewOwner").textContent = property.owner || "-";
+    document.getElementById("viewPhone").textContent = property.phone || "-";
+    document.getElementById("viewPrice").textContent = property.price ? `${property.price} EGP` : "-";
+    document.getElementById("viewArea").textContent = property.area ? `${property.area} m²` : "-";
+    document.getElementById("viewDescription").textContent = property.description || "-";
+    
+    const viewMapBtn = document.getElementById("viewMapBtn");
+    if (property.mapLink) {
+        viewMapBtn.style.display = "inline-block";
+        viewMapBtn.onclick = () => window.open(property.mapLink, "_blank");
+    } else {
+        viewMapBtn.style.display = "none";
+    }
+
+    viewModal.style.display = "flex";
+}
+
+const searchInput = document.getElementById("searchProperty");
+const filterSelect = document.getElementById("propertyFilter");
+
+function applyFilters() {
+    const searchValue = searchInput.value.toLowerCase();
+    const selectedType = filterSelect.value;
+    filteredProperties = properties.filter(property => {
+        const matchesSearch = property.name.toLowerCase().includes(searchValue);
+        const matchesType = selectedType === "all" || property.type === selectedType;
+        return matchesSearch && matchesType;
+    });
+    renderProperties();
+}
+
+searchInput.addEventListener("input", applyFilters);
+filterSelect.addEventListener("change", applyFilters);
+
+const mapInput = document.getElementById("propertyMapLink");
+const mapPreview = document.getElementById("mapPreview");
+const mapContainer = document.getElementById("mapPreviewContainer");
+
+mapInput.addEventListener("input", () => {
+    const link = mapInput.value.trim();
+    if(link){ mapPreview.src = link; mapContainer.style.display = "block"; }
+    else { mapContainer.style.display = "none"; }
+});
+
+document.getElementById("openMapBtn").addEventListener("click", () => {
+    const mapLink = document.getElementById("propertyMapLink").value.trim();
+    if(!mapLink){ showToast("Please enter Google Maps link first.", true); return; }
+    window.open(mapLink, "_blank");
+});
+
+const logoutBtn = document.getElementById("logoutBtn");
+if(logoutBtn){
+    logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
+        window.location.href = "../login.html";
+    });
+}
+
+fetchProperties();
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Members - Aqar-Go</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <script>
+        // ==========================================
+        // 0. الحماية (Security Check) 
+        // ==========================================
+        const currentUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user"));
+        if (!currentUser || currentUser.role !== 'owner') {
+            window.location.replace("../login.html");
+        }
+    </script>
+
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="../assets/logo.png">
+                <span>Aqar-Go</span>
+            </div>
+            <ul>
+                <li onclick="window.location.href='owner-dashboard.html'"><i class="fas fa-chart-line"></i><span>Dashboard</span></li>
+                <li onclick="window.location.href='properties.html'"><i class="fas fa-building"></i><span>Properties</span></li>
+                <li onclick="window.location.href='services.html'"><i class="fas fa-tools"></i><span>Services</span></li>
+                <li class="active"><i class="fas fa-users"></i><span>Team Members</span></li>
+                <li onclick="window.location.href='pending-reviews.html'"><i class="fas fa-clock"></i><span>Pending Reviews</span></li>
+                <li onclick="window.location.href='analytics.html'"><i class="fas fa-chart-pie"></i><span>Analytics</span></li>
+                <li onclick="window.location.href='settings.html'"><i class="fas fa-gear"></i><span>Settings</span></li>
+            </ul>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </aside>
+
+        <main class="main-content">
+            <div class="team-page">
+                <div class="page-header">
+                    <div>
+                        <h1>Team Members</h1>
+                        <p>Manage your team efficiently.</p>
+                    </div>
+                    <button id="openMemberModal" class="add-member-btn">
+                        <i class="fas fa-plus"></i> Add Member
+                    </button>
+                </div>
+
+                <div class="member-stats">
+                    <div class="member-card"><h2 id="totalMembers">0</h2><p>Total Members</p></div>
+                    <div class="member-card"><h2 id="totalCollectors">0</h2><p>Collectors</p></div>
+                    <div class="member-card"><h2 id="totalReviewers">0</h2><p>Reviewers</p></div>
+                    <div class="member-card"><h2 id="totalAdmins">0</h2><p>Admins</p></div>
+                </div>
+
+                <div class="table-container">
+                    <table class="members-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Collected Data</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Member</h2>
+                <span id="closeMemberModal">&times;</span>
+            </div>
+            <form id="memberForm">
+                <input type="text" id="memberName" placeholder="Full Name" required>
+                <input type="email" id="memberEmail" placeholder="Email" required>
+                
+                <input type="password" id="memberPassword" placeholder="Password" style="width: 100%; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 18px;" required>
+                
+                <select id="memberRole">
+                    <option value="Collector">Collector</option>
+                    <option value="Reviewer">Reviewer</option>
+                    <option value="Admin">Admin</option>
+                </select>
+                <button type="submit">Save Member</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="viewMemberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Member Details</h2>
+                <span id="closeViewMember">&times;</span>
+            </div>
+            <div class="property-details">
+                <p><strong>Name:</strong> <span id="viewMemberName"></span></p>
+                <p><strong>Email:</strong> <span id="viewMemberEmail"></span></p>
+                <p><strong>Role:</strong> <span id="viewMemberRole"></span></p>
+                <p><strong>Status:</strong> <span id="viewMemberStatus"></span></p>
+                <p><strong>Collected Data:</strong> <span id="viewMemberRecords"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+
+        const uiStyles = document.createElement('style');
+        uiStyles.innerHTML = `
+            .custom-toast { position: fixed; bottom: 30px; right: 30px; background: #072c67; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; font-weight: 500; transform: translateX(150%); transition: transform 0.4s ease; z-index: 9999; }
+            .custom-toast.show { transform: translateX(0); }
+            .custom-toast.error { background: #ef4444; }
+            .custom-confirm-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+            .custom-confirm-overlay.show { opacity: 1; pointer-events: auto; }
+            .custom-confirm-box { background: white; padding: 25px; border-radius: 10px; text-align: center; max-width: 400px; width: 90%; transform: translateY(-20px); transition: transform 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+            .custom-confirm-overlay.show .custom-confirm-box { transform: translateY(0); }
+            .custom-confirm-box h3 { margin-top: 0; color: #ef4444; margin-bottom: 15px; }
+            .custom-confirm-box p { color: #64748b; margin-bottom: 25px; font-size: 16px; }
+            .custom-confirm-buttons { display: flex; justify-content: center; gap: 15px; }
+            .custom-confirm-btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s;}
+            .btn-cancel { background: #e2e8f0; color: #475569; } .btn-cancel:hover { background: #cbd5e1; }
+            .btn-confirm-delete { background: #ef4444; color: white; } .btn-confirm-delete:hover { background: #dc2626; }
+            .action-btn { padding: 6px 14px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; transition: all 0.2s ease; margin-right: 4px; }
+            .action-btn.view { background: #072c67; color: white; } .action-btn.view:hover { background: #051f4e; }
+            .action-btn.edit { background: #f59e0b; color: white; } .action-btn.edit:hover { background: #d97706; }
+            .action-btn.delete { background: #ef4444; color: white; } .action-btn.delete:hover { background: #dc2626; }
+        `;
+        document.head.appendChild(uiStyles);
+
+        const toastDiv = document.createElement('div');
+        toastDiv.id = 'toastNotification';
+        toastDiv.className = 'custom-toast';
+        toastDiv.innerHTML = `<i class="fas fa-info-circle"></i> <span id="toastMessage"></span>`;
+        document.body.appendChild(toastDiv);
+
+        const confirmDiv = document.createElement('div');
+        confirmDiv.className = 'custom-confirm-overlay';
+        confirmDiv.innerHTML = `
+            <div class="custom-confirm-box">
+                <h3>Remove Member</h3>
+                <p id="confirmMessage">Are you sure you want to remove this member forever?</p>
+                <div class="custom-confirm-buttons">
+                    <button class="custom-confirm-btn btn-cancel" id="confirmNoBtn">Cancel</button>
+                    <button class="custom-confirm-btn btn-confirm-delete" id="confirmYesBtn">Yes, Remove</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(confirmDiv);
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toastNotification");
+            document.getElementById("toastMessage").textContent = message;
+            if(isError) toast.classList.add("error"); else toast.classList.remove("error");
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 4000);
+        }
+
+        function customConfirm(message) {
+            return new Promise((resolve) => {
+                const overlay = document.querySelector('.custom-confirm-overlay');
+                document.getElementById('confirmMessage').textContent = message;
+                overlay.classList.add('show');
+                document.getElementById('confirmYesBtn').onclick = () => { overlay.classList.remove('show'); resolve(true); };
+                document.getElementById('confirmNoBtn').onclick = () => { overlay.classList.remove('show'); resolve(false); };
+            });
+        }
+
+        const modal = document.getElementById("memberModal");
+        const viewModal = document.getElementById("viewMemberModal");
+        const tableBody = document.getElementById("membersTableBody");
+        const memberForm = document.getElementById("memberForm");
+        const passwordInput = document.getElementById("memberPassword");
+
+        let members = [];
+        let editingId = null;
+
+        document.getElementById("openMemberModal").onclick = () => {
+            memberForm.reset(); editingId = null;
+            passwordInput.required = true;
+            passwordInput.placeholder = "Password";
+            document.getElementById("modalTitle").textContent = "Add Member";
+            modal.style.display = "flex";
+        };
+        document.getElementById("closeMemberModal").onclick = () => { modal.style.display = "none"; };
+        document.getElementById("closeViewMember").onclick = () => { viewModal.style.display = "none"; };
+        window.onclick = (e) => {
+            if(e.target === modal) modal.style.display = "none";
+            if(e.target === viewModal) viewModal.style.display = "none";
+        };
+
+        async function fetchMembers() {
+            tableBody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Loading team members...</td></tr>";
+            try {
+                const response = await fetch(`${API_BASE_URL}/users`);
+                members = await response.json();
+                
+                // هنحسب الـ Collected Data لكل موظف لوحدها
+                const propRes = await fetch(`${API_BASE_URL}/properties`);
+                const servRes = await fetch(`${API_BASE_URL}/services`);
+                const allProps = await propRes.json();
+                const allServs = await servRes.json();
+                
+                members.forEach(member => {
+                    const memberProps = allProps.filter(p => p.addedBy === member.name).length;
+                    const memberServs = allServs.filter(s => s.addedBy === member.name).length;
+                    member.records = memberProps + memberServs; // إضافة العدد الإجمالي لكل موظف
+                });
+
+                renderMembers();
+            } catch (error) {
+                tableBody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Failed to load members.</td></tr>";
+            }
+        }
+
+        function renderMembers() {
+            document.getElementById("totalMembers").textContent = members.length;
+            document.getElementById("totalCollectors").textContent = members.filter(m => m.role === "Collector").length;
+            document.getElementById("totalReviewers").textContent = members.filter(m => m.role === "Reviewer").length;
+            document.getElementById("totalAdmins").textContent = members.filter(m => m.role === "Admin" || m.role === "owner").length;
+
+            tableBody.innerHTML = "";
+            if (members.length === 0) {
+                tableBody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No team members found.</td></tr>";
+                return;
+            }
+
+            members.forEach((member) => {
+                let statusColor = member.status === 'Active' ? '#22c55e' : '#ef4444';
+                // عشان الأونر ميمسحش نفسه بالغلط أو يعدل نفسه من الجدول ده
+                const actionButtons = member.role === 'owner' 
+                    ? `<span style="color:#64748b; font-size:12px;">Primary Owner</span>`
+                    : `
+                        <button class="action-btn view" onclick="viewMember('${member._id}')">View</button>
+                        <button class="action-btn edit" onclick="editMember('${member._id}')">Edit</button>
+                        <button class="action-btn delete" onclick="deleteMember('${member._id}')">Delete</button>
+                    `;
+
+                tableBody.innerHTML += `
+                <tr>
+                    <td><strong>${member.name}</strong></td>
+                    <td>${member.email}</td>
+                    <td>${member.role}</td>
+                    <td><span style="background:${statusColor}20; color:${statusColor}; padding:5px 10px; border-radius:50px; font-weight:bold; font-size:12px;">${member.status || 'Active'}</span></td>
+                    <td>${member.records || 0}</td>
+                    <td>${actionButtons}</td>
+                </tr>`;
+            });
+        }
+
+        memberForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const memberData = {
+                name: document.getElementById("memberName").value,
+                email: document.getElementById("memberEmail").value,
+                role: document.getElementById("memberRole").value,
+                status: "Active"
+            };
+
+            if (!editingId) {
+                memberData.password = passwordInput.value;
+            } else if (passwordInput.value) {
+                memberData.password = passwordInput.value;
+            }
+
+            try {
+                let url = `${API_BASE_URL}/users/add`;
+                let method = 'POST';
+
+                if (editingId) {
+                    url = `${API_BASE_URL}/users/update/${editingId}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(memberData)
+                });
+
+                if (response.ok) {
+                    showToast(editingId ? "Member updated successfully!" : "Member added successfully!");
+                    modal.style.display = "none";
+                    editingId = null;
+                    fetchMembers();
+                } else {
+                    const data = await response.json();
+                    showToast(data.message || "Operation failed", true);
+                }
+            } catch (error) {
+                showToast("Server connection error", true);
+            }
+        });
+
+        async function deleteMember(id) {
+            const member = members.find(m => m._id === id);
+            if(member.role === 'owner') return showToast("Cannot delete the Owner!", true);
+
+            const isConfirmed = await customConfirm(`Are you sure you want to remove ${member ? member.name : 'this member'}?`);
+            if (!isConfirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/delete/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showToast("Member removed permanently!");
+                    fetchMembers();
+                }
+            } catch (error) {
+                showToast("Server connection error", true);
+            }
+        }
+
+        function editMember(id) {
+            const member = members.find(m => m._id === id);
+            if (!member || member.role === 'owner') return;
+            
+            editingId = id;
+            document.getElementById("memberName").value = member.name;
+            document.getElementById("memberEmail").value = member.email;
+            document.getElementById("memberRole").value = member.role;
+            
+            passwordInput.required = false; 
+            passwordInput.placeholder = "Leave blank to keep same password";
+            document.getElementById("modalTitle").textContent = "Edit Member";
+            
+            modal.style.display = "flex";
+        }
+
+        function viewMember(id) {
+            const member = members.find(m => m._id === id);
+            if (!member) return;
+
+            document.getElementById("viewMemberName").textContent = member.name;
+            document.getElementById("viewMemberEmail").textContent = member.email;
+            document.getElementById("viewMemberRole").textContent = member.role;
+            document.getElementById("viewMemberStatus").textContent = member.status || "Active";
+            document.getElementById("viewMemberRecords").textContent = member.records || 0;
+
+            viewModal.style.display = "flex";
+        }
+
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.removeItem("user");
+            sessionStorage.removeItem("user");
+            window.location.href = "../login.html";
+        });
+
+        fetchMembers();
+    </script>
+</body>
+</html>
