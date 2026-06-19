@@ -30,3 +30,33 @@ exports.login = async (req, res) => {
         return res.status(500).json({ message: "Server error" });
     }
 };
+
+// ==========================================
+// دالة التسجيل الجديدة (عشان نكريت الحسابات)
+// ==========================================
+exports.register = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+
+        // التأكد إن الإيميل مش موجود قبل كده
+        const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists with this email" });
+        }
+
+        // إنشاء المستخدم الجديد
+        const newUser = new User({
+            name,
+            email: email.trim().toLowerCase(),
+            password, 
+            role: role || 'collector' // لو محددناش دور، بيعتبره collector كوضع افتراضي
+        });
+
+        await newUser.save();
+
+        return res.status(201).json({ message: "User registered successfully", user: newUser });
+    } catch (error) {
+        console.error("Register Error:", error);
+        return res.status(500).json({ message: "Server error during registration" });
+    }
+};
